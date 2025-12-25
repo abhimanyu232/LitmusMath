@@ -1,0 +1,11 @@
+# executables
+*.x 
+
+# build directories
+build/
+
+# temporarily github actions
+._sample_github/
+
+
+
