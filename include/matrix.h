@@ -1,5 +1,7 @@
 #include <array>
+#include <span>
 #include <vector>
+#include <iostream>
 
 // Matrix class using std::vector
 // can be implemented, probably faster using compile time sizes and std::array.
@@ -155,6 +157,42 @@ auto matMultBasic(const Matrix<U>& A, const Matrix<V>& B) {
 				size_t b_idx = n * k + j;
 
 				result(res_idx) += A(a_idx) * B(b_idx);
+			}
+		}
+	}
+
+	return result;
+}
+
+// takes an array or vector here, and uses std::span as a non-owning reference to multiple two matrices.
+// additionally takes the shape of the incoming matrices as a std::pair each.
+// INPUT:  A -> MxP & B -> PxN
+// RETURN: C -> M*N
+// RETURN_TYPE: std::<typename std::common_type<U, V>::type>
+// assert(A.P == B.P);
+template <typename U, typename V>
+auto cStyle_matMultBasic(std::span<const U> A, std::pair<size_t, size_t> shapeA,
+												 std::span<const V> B,
+												 std::pair<size_t, size_t> shapeB) {
+
+	// the resultant matrix should be converted to appropriate type
+	using common_t = typename std::common_type<U, V>::type;
+
+	const size_t m = shapeA.first;
+	const size_t p = shapeA.second;
+	// shapeA.second == shapeB.first --> common index to sum over for the innermost loop
+	const size_t n = shapeB.second;
+
+	std::vector<common_t> result(m * n, 0.);
+
+	for (size_t i = 0; i < m; ++i) {
+		for (size_t j = 0; j < n; ++j) {
+			size_t res_idx = n * i + j;
+			for (size_t k = 0; k < p; ++k) {
+				size_t a_idx = p * i + k;
+				size_t b_idx = n * k + j;
+
+				result[res_idx] += A[a_idx] * B[b_idx];
 			}
 		}
 	}

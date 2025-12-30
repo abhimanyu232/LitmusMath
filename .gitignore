@@ -2,7 +2,7 @@
 *.x 
 
 # build directories
-build/
+build*/
 
 # temporarily github actions
 ._sample_github/
