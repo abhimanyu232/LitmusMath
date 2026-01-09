@@ -21,12 +21,12 @@ jobs:
       #   with:
       #     token: ${{secrets.github_token}}
 
-      # - name: Install compiler and packages
-      #   shell: bash
-      #   # Note the current convention is to use the -S and -B options here to specify source
-      #   # and build directories, but this is only available with CMake 3.13 and higher.
-      #   run: |
-      #     sudo apt-get install -y gcc-15 g++-15 python3-yaml cmake
+      - name: Install compiler and packages
+        # shell: bash
+        # Note the current convention is to use the -S and -B options here to specify source
+        # and build directories, but this is only available with CMake 3.13 and higher.
+        run: |
+          sudo apt-get install -y gcc-14 g++-14
 
       - name: Configure CMake (Create build files)
         working-directory: ${{github.workspace}}
@@ -35,11 +35,17 @@ jobs:
         # export CMAKE_OPTIONS="${CMAKE_OPTIONS} ${ENV_CMAKE_OPTIONS}"
         # export CXX_FLAGS="${CXX_FLAGS} ${ENV_CXX_FLAGS}"
         run: cmake -B build -DTESTING=ON -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        env:
+          CC: gcc-14
+          CXX: g++-14
 
       - name: Build / Compile
         working-directory: ${{github.workspace}}
         # shell: bash
         run: VERBOSE=1 cmake --build build --config ${{env.BUILD_TYPE}} -j4
+        env:
+          CC: gcc-14
+          CXX: g++-14
 
       - name: Run the tests
         working-directory: ${{github.workspace}}/build

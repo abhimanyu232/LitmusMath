@@ -1,112 +1,178 @@
+#ifndef MATRIX_H
+#define MATRIX_H
+
 #include <array>
+#include <print>
 #include <span>
 #include <vector>
-#include <iostream>
+
+// shouldnt work,
+// would check if vector<T> has size that can be a mult  of two size_t objects.
+template <typename T>
+concept init_able_vector = requires(std::vector<T> vector, size_t a, size_t b) {
+	requires vector.size() == a* b;
+};
 
 // Matrix class using std::vector
 // can be implemented, probably faster using compile time sizes and std::array.
-// the size (or shape) will then have to be given as template parameters.
+// the size_ (or shape) will then have to be given as template parameters.
 template <typename T>
 class Matrix {
+
+	using data_type = std::vector<T>;
+	using value_type = typename data_type::value_type;
+
  public:
 	// constructors
-
-	// zero init with some given size
-	constexpr Matrix(const size_t nX, const size_t nY) noexcept
-			: m{nX}, n{nY}, size(nX * nY), elements(std::vector<T>(size, 0)) {
-		//// size = m * n;
-		//// elements = std::vector<T>(size, 0);	 // zero init the matrix
+	constexpr Matrix() noexcept : m_{0}, n_{0}, size_(0), elements_(0) {
+		elements_.reserve(16);
 	}
+
+	// zero init with some given shape
+	constexpr Matrix(const size_t nX, const size_t nY) noexcept
+			: m_{nX}, n_{nY}, size_(nX * nY), elements_(data_type(size_, 0)) {}
+
+	// !!! Not Safe : none of the ctors are safe since (in_data.size() == nX*nY) IS NOT GUARANTEED
+	// !!! HOW TO ENSURE WITHOUT USING STATIC ASSERTS???
 
 	// init with given vector and shape
-	constexpr Matrix(std::vector<T>& iVec, size_t nX, size_t nY) noexcept
-			: m{nX}, n{nY}, size(m * n), elements(iVec) {
-		//// size = m * n;
-	}
+	constexpr Matrix(data_type& in_data, size_t nX, size_t nY) noexcept
+			: m_{nX}, n_{nY}, size_(m_ * n_), elements_(in_data) {}
 
 	// using r-value with given vector and shape
-	constexpr Matrix(std::vector<T>&& iVec, size_t nX, size_t nY) noexcept
-			: m{nX}, n{nY}, size(m * n), elements(std::move(iVec)) {
-		//// size = m * n;
-		//// elements = std::move(iVec);
-	}
-
-	// using vector of different base type
-	// todo:
-	// !!! how to ensure this without a static assert?
-	// !!! has to be the same size to copy
-	template <typename T2>
-	constexpr Matrix(std::vector<T2>& tVec, size_t nX, size_t nY) noexcept
-			: m{nX}, n{nY}, size(m * n) {
-		//// size = m * n;
-		elements.resize(size);
-		for (size_t i = 0; i < size; ++i)
-			elements[i] = static_cast<T>(tVec[i]);
-		// <typename std::common_type<T, T2>::type> does not!!? work here
-		// since the matrix itself is type T and this would need to change that type.
-	}
+	constexpr Matrix(data_type&& in_data, size_t nX, size_t nY) noexcept
+			: m_{nX}, n_{nY}, size_(m_ * n_), elements_(std::move(in_data)) {}
 
 	// copy constructors
 	// copy from Matrix of same type
 	// todo: should we care about copies vs move?
-	constexpr Matrix(const Matrix<T>& otherMatrix) noexcept
-			: m{otherMatrix.m},
-				n{otherMatrix.n},
-				size(m * n),
-				elements(otherMatrix.elements) {
-		// // elements = otherMatrix.elements;
-		// // m = otherMatrix.m;
-		// // n = otherMatrix.n;
-		// // size = m * n;
-	}
+	constexpr Matrix(const Matrix& otherMatrix) noexcept
+			: m_{otherMatrix.shape().first},
+				n_{otherMatrix.shape().second},
+				size_(m_ * n_),
+				elements_(otherMatrix.elements()) {}
 
 	// copy from a matrix of a different type.
 	// type converts to Matrix<T> from Matrix<U>
 	template <typename U>
 	constexpr Matrix(const Matrix<U>& otherMatrix) noexcept
-			: m{otherMatrix.m},
-				n{otherMatrix.n},
-				size(m * n),
-				elements(otherMatrix.elements.begin(), otherMatrix.elements.end()) {
-		// // m = otherMatrix.m;
-		// // n = otherMatrix.n;
-		// // size = m * n;
-	}
+			: m_{otherMatrix.shape().first},
+				n_{otherMatrix.shape().second},
+				size_(m_ * n_),
+				elements_(otherMatrix.elements().begin(),
+									otherMatrix.elements().end()) {}
 
  public:
 	//  overloads
 
+	// copy from a vector
+	const T& operator=(const data_type& t_data) const noexcept {
+		assert(size_ == t_data.size());
+		elements_ = t_data;
+
+		return elements_;
+	}
+
+	// copy from a vector of different type
+	template <typename U>
+	const T& operator=(const std::span<U> u_data) const noexcept {
+		assert(size_ == u_data.size());
+		for (size_t i = 0; i < size_; ++i)
+			elements_[i] = static_cast<T>(u_data[i]);
+
+		return elements_;
+	}
+
+	// arithmetic add + operator overloads
+	Matrix& operator+=(const Matrix& otherMatrix) noexcept {
+		assert(size_ == otherMatrix.size());
+		for (unsigned int i = 0; i < size_; ++i) {
+			elements_[i] += otherMatrix[i];	 // eqv to: otherMatrix.elements(i);
+		}
+		return *this;
+	}
+
+	template <typename U>
+	Matrix& operator+=(const Matrix<U>& otherMatrix) noexcept {
+		assert(size_ == otherMatrix.size());
+		for (unsigned int i = 0; i < size_; ++i) {
+			elements_[i] += static_cast<T>(otherMatrix[i]);
+		}
+		return *this;
+	}
+
+	Matrix& operator+=(const data_type& otherData) const noexcept {
+		assert(size_ == otherData.size());
+		for (unsigned int i = 0; i < size_; ++i) {
+			elements_[i] += otherData[i];
+		}
+		return *this;
+	}
+
+	// arithmetic subtract - operator overloads
+	Matrix& operator-=(const Matrix& otherMatrix) noexcept {
+		for (unsigned int i = 0; i < size_; ++i) {
+			elements_[i] -= otherMatrix[i];
+		}
+		return *this;
+	}
+
+	template <typename U>
+	Matrix& operator-=(const Matrix<U>& otherMatrix) noexcept {
+		assert(size_ == otherMatrix.size());
+		for (unsigned int i = 0; i < size_; ++i) {
+			elements_[i] -= static_cast<T>(otherMatrix[i]);
+		}
+		return *this;
+	}
+
+	Matrix& operator-=(const data_type& otherData) const noexcept {
+		assert(size_ == otherData.size());
+		for (unsigned int i = 0; i < size_; ++i) {
+			elements_[i] -= otherData[i];
+		}
+		return *this;
+	}
+
 	// index operator
-	const T& operator()(const size_t i) const noexcept { return elements[i]; }
+	const T& operator()(const size_t i) const noexcept { return elements_[i]; }
 
-	T& operator()(const size_t i) noexcept { return elements[i]; }
+	T& operator()(const size_t i) noexcept { return elements_[i]; }
 
-	const T& operator[](const size_t i) const noexcept { return elements[i]; }
+	const T& operator[](const size_t i) const noexcept { return elements_[i]; }
 
-	T& operator[](const size_t i) noexcept { return elements[i]; }
+	T& operator[](const size_t i) noexcept { return elements_[i]; }
 
 	// member functions
 
 	// print as a 1D array
 	void print_elements() const {
-		for (const auto& el : elements)
-			std::cout << el << std::endl;
+		for (const auto& el : elements_)
+			std::println("{:.6f}", el);
 	}
 
 	void print_matrix() const {
-		for (size_t i = 0; i < m; ++i) {
-			for (size_t j = 0; j < n; ++j) {
-				std::cout << elements[n * i + j] << " ";
+		for (size_t i = 0; i < m_; ++i) {
+			for (size_t j = 0; j < n_; ++j) {
+				std::print("{} ", elements_[n_ * i + j]);
 			}
-			std::cout << std::endl;
+			std::println();
 		}
-		std::cout << std::endl;
+		std::println();
 	}
+
+	// property accessor
+	const size_t size() const noexcept { return size_; }
+
+	const auto shape() const noexcept { return std::make_pair(m_, n_); }
+
+	const data_type& elements() const noexcept { return elements_; }
+
+	const data_type& elements(size_t i) const noexcept { return elements_[i]; }
 
 	// Operations
 
 	// Matrix Multiply
-
 	// do basic mat mult on two matrices.
 	template <typename U, typename V>
 	friend auto matMultBasic(const Matrix<U>& A, const Matrix<V>& B);
@@ -116,14 +182,29 @@ class Matrix {
 
  private:
 	// private members
-
- public:
-	// member variables
-	size_t m;
-	size_t n;
-	size_t size;
-	std::vector<T> elements;
+	size_t m_;
+	size_t n_;
+	size_t size_;
+	data_type elements_;
 };
+
+/// @brief Binary Arithmetic Addition Overload
+/// @return
+template <typename U, typename V>
+auto operator+(const Matrix<U>& lhs, const Matrix<V>& rhs) {
+	assert(lhs.size() == rhs.size());
+	Matrix<typename std::common_type<U, V>::type> result(lhs);
+	return result += rhs;
+}
+
+/// @brief Binary Arithmetic Subtraction Overload
+/// @return
+template <typename U, typename V>
+auto operator-(const Matrix<U>& lhs, const Matrix<V>& rhs) {
+	assert(lhs.size() == rhs.size());
+	Matrix<typename std::common_type<U, V>::type> result(lhs);
+	return result -= rhs;
+}
 
 // pass array or vector here, and use span or mdspan[c++23] here to represent them as a matrix
 // INPUT:  A -> MxP & B -> PxN
@@ -136,16 +217,16 @@ auto matMultBasic(const Matrix<U>& A, const Matrix<V>& B) {
 	// the resultant matrix should be converted to appropriate type
 	using common_t = typename std::common_type<U, V>::type;
 
-	const size_t m = A.m;
-	const size_t p = A.n;
-	// A.n == B.m --> common index to sum over for the innermost loop
-	const size_t n = B.n;
+	const size_t m = A.m_;
+	const size_t p = A.n_;
+	// A.n_ == B.m_ --> common index to sum over for the innermost loop
+	const size_t n = B.n_;
 
 	// todo:
 	// !!!  do you need to make this object here. /
 	// !!!  no need, can simply construct this while returning /
 	// !!!  and maybe save on space??? /
-	// !!!  store result in an array and then construct eg. : return Matrix<common_t>(result,m, n);
+	// !!!  store result in an array and then construct eg. : return Matrix<common_t>(result,m_, n_);
 	// Matrix<common_t> result(std::vector<common_t>(m*n, 0), m, n);
 	Matrix<common_t> result(m, n);
 
@@ -160,7 +241,6 @@ auto matMultBasic(const Matrix<U>& A, const Matrix<V>& B) {
 			}
 		}
 	}
-
 	return result;
 }
 
@@ -199,3 +279,5 @@ auto cStyle_matMultBasic(std::span<const U> A, std::pair<size_t, size_t> shapeA,
 
 	return result;
 }
+
+#endif
