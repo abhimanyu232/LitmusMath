@@ -18,6 +18,7 @@
             "displayName": "GCC 15 Empty Build Type",
             "description": "Using compilers: C = /home/vassal/spack/opt/spack/linux-zen2/gcc-15.2.0-uif35diu4hejbs5sw7k3gv2jrmnnxmkw/bin/gcc, CXX = /home/vassal/spack/opt/spack/linux-zen2/gcc-15.2.0-uif35diu4hejbs5sw7k3gv2jrmnnxmkw/bin/g++",
             "binaryDir": "${sourceDir}/build/${presetName}",
+            "hidden": true,
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
                 "CMAKE_C_COMPILER": "/home/vassal/spack/opt/spack/linux-zen2/gcc-15.2.0-uif35diu4hejbs5sw7k3gv2jrmnnxmkw/bin/gcc",

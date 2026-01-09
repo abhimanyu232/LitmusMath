@@ -1,16 +1,36 @@
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 3.20)
 
 set(PROJECT_NAME LitmusMath)
-# project(${PROJECT_NAME})
-project( 
-  ${PROJECT_NAME}
-  LANGUAGES CXX
-  )
+project(${PROJECT_NAME} VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_FLAGS "-march=native")
 
+set(CMAKE_CXX_FLAGS "-march=native -mtune=native")
+
+### Clang Tidy
+find_program(CLANG_TIDY NAMES "clang-tidy-20")
+
+if(CLANG_TIDY)
+  message(STATUS "Clang-tidy found: ${CLANG_TIDY}")
+  set(CMAKE_CXX_CLANG_TIDY
+        ${CLANG_TIDY}
+        "-config-file=${CMAKE_CURRENT_SOURCE_DIR}/.clang-tidy"
+        "--extra-arg=-Wno-unknown-warning-option"
+        "--extra-arg=-stdlib=libc++" # ensures that clang-tidy uses the right stdlib, else shows errors with gcc. does not affect compilation
+        "--extra-arg=-std=c++23" 
+    ) 
+else() ##-Wno-unknown-warning-option,-stdlib=libc++,-std=c++23
+  message(WARNING "Clang-tidy not found. Static analysis disabled.")
+endif()
+
+### SET BUILD TYPE
+## "Debug: {-g}" 
+## "Release: {-O3 -DNDEBUG} " 
+## "MinSizeRel: {-Os}" 
+## "RelWithDebInfo: { -O2 -g -DNDEBUG}") [DEFAULT]
 set(default_build_type "RelWithDebInfo")
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
@@ -20,32 +40,41 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
     "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
-# "Debug: {-g}" "Release: {-O3 -DNDEBUG} " "MinSizeRel: {-Os}" "RelWithDebInfo: { -O2 -g -DNDEBUG}")
 
 
-########################################
-## Define include directories
+### Define include directories
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
 include_directories(${COMMON_INCLUDES})
 
-#### file globbing ##############################################################
-### These instructions search the directory tree when cmake is
-### invoked and put all files that match the pattern in the variables 
-### `sources` and `data`.
-file(GLOB_RECURSE sources CONFIGURE_DEPENDS src/*.cpp)
-
+#### How to get these libraries to use clang, idea: add a cpp file in the library source that includes the libraries.
 ### Compile header files into a library
-add_library(lm_matlib INTERFACE)
-target_include_directories(lm_matlib INTERFACE ${COMMON_INCLUDES})
-### IF I needed Boost say
+## local matrix library
+add_library(lm_matlib INTERFACE ${PROJECT_SOURCE_DIR}/include/matrix.h) 
+set_target_properties(lm_matlib PROPERTIES CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}")
+
+## local statistics library
+add_library(lm_stats INTERFACE ${PROJECT_SOURCE_DIR}/include/statistics.h)
+set_target_properties(lm_stats PROPERTIES CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}")
+
+## local time library
+add_library(lm_timer INTERFACE ${PROJECT_SOURCE_DIR}/include/timer.h)
+set_target_properties(lm_timer PROPERTIES CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}")
+
+## IF I needed an external library, say header only Boost 
 # target_link_libraries(lm_matlib INTERFACE Boost::Boost)
 
-### Main as a library client)
+### file globbing ##################################################
+file(GLOB_RECURSE sources CONFIGURE_DEPENDS src/*.cpp src/*.cc)
+## Main as a library client)
 add_executable(${PROJECT_NAME} ${sources})
-target_link_libraries(${PROJECT_NAME} lm_matlib)
+target_link_libraries(${PROJECT_NAME} lm_matlib lm_stats lm_timer)
 target_compile_options(${PROJECT_NAME} PUBLIC -std=c++23)
 
-###### dependencies ##
+# This can enable Clang-Tidy for the test executable too
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}")
+
+###### hypothetical dependencies ######
+### ## ## ## ## ## ## ## ## ## ## ###
 ### This defines the variables Boost_LIBRARIES that contains all library names
 ### that we need to link into the program.
 ### find_package(Boost 1.36.0 COMPONENTS filesystem system REQUIRED)
@@ -54,46 +83,8 @@ target_compile_options(${PROJECT_NAME} PUBLIC -std=c++23)
 #   # here you can add any library dependencies
 # )
 
-
 set(TESTING OFF CACHE BOOL "True if tests shall be built")
 if (TESTING)
-  ### Google Tests 
-  include(FetchContent)
-  FetchContent_Declare(
-    googletest
-    # Specify the commit you depend on and update it regularly.
-    URL https://github.com/google/googletest/archive/5376968f6948923e2411081fd9372e71a59d8e77.zip
-    DOWNLOAD_EXTRACT_TIMESTAMP 1
-  )
-  ### For Windows: Prevent overriding the parent project's compiler/linker settings
-  # set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-  FetchContent_MakeAvailable(googletest)
-
-  # if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-  #   include(CTest)
-  # endif()
-  ### OR 
   enable_testing()
-
-  file(GLOB_RECURSE sources_test CONFIGURE_DEPENDS tests/*.cpp)
-
-  set(TEST_NAME ${PROJECT_NAME}_tests)
-  add_executable(${TEST_NAME} ${sources_test})
-  target_link_libraries(${TEST_NAME} gtest gtest_main)
-  ## Extra linking to this project.
-  target_link_libraries(${TEST_NAME} lm_matlib)
-
-  # target_compile_options(${TEST_NAME} PUBLIC -O2 -Wall -Werror=return-type -Wconversion -Wimplicit-fallthrough -Werror=missing-declarations -Werror=redundant-decls )
-
-  # gtest_discover_tests(${TEST_NAME})
-  add_test(UnitTests ${TEST_NAME})
-
-
-  ### IDE clean-up
-  set_target_properties(gtest PROPERTIES FOLDER extern)
-  set_target_properties(gtest_main PROPERTIES FOLDER extern)
-  set_target_properties(gmock PROPERTIES FOLDER extern)
-  set_target_properties(gmock_main PROPERTIES FOLDER extern) 
-
-
-endif()
+  add_subdirectory(tests)
+endif() 

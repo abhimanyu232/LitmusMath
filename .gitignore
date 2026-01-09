@@ -1,11 +1,12 @@
 # executables
 *.x 
+*.out 
+
+# build intermediates, pre-compiled headers, object files etc
+*.*ch 
+*.o
+*.a 
+*.s 
 
 # build directories
 build*/
-
-# temporarily github actions
-._sample_github/
-
-
-
