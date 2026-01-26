@@ -1,76 +1,91 @@
 {
-    "version": 8,
-    "configurePresets": [
-        {
-            "name": "gcc13",
-            "displayName": "GCC 13.3.0 x86_64-linux-gnu",
-            "description": "Using compilers: C = /usr/bin/gcc, CXX = /usr/bin/g++",
-            "binaryDir": "${sourceDir}/build/${presetName}",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
-                "CMAKE_C_COMPILER": "/usr/bin/gcc",
-                "CMAKE_CXX_COMPILER": "/usr/bin/g++"
-            }
-        },
-        {
-            "name": "gcc15",
-            "displayName": "GCC 15 Empty Build Type",
-            "description": "Using compilers: C = /home/vassal/spack/opt/spack/linux-zen2/gcc-15.2.0-uif35diu4hejbs5sw7k3gv2jrmnnxmkw/bin/gcc, CXX = /home/vassal/spack/opt/spack/linux-zen2/gcc-15.2.0-uif35diu4hejbs5sw7k3gv2jrmnnxmkw/bin/g++",
-            "binaryDir": "${sourceDir}/build/${presetName}",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
-                "CMAKE_C_COMPILER": "/home/vassal/spack/opt/spack/linux-zen2/gcc-15.2.0-uif35diu4hejbs5sw7k3gv2jrmnnxmkw/bin/gcc",
-                "CMAKE_CXX_COMPILER": "/home/vassal/spack/opt/spack/linux-zen2/gcc-15.2.0-uif35diu4hejbs5sw7k3gv2jrmnnxmkw/bin/g++"
-            }
-        },
-        {
-            "name": "GCC15_RelDebInfo",
-            "displayName": "GCC15 w/ RelDebInfo Flags: -O2 -g -DNDEBUG",
-            "inherits": "gcc15",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
-            }
-        },
-        {
-            "name": "GCC15_Release",
-            "displayName": "GCC15 w/ Release Flags: -O3 -DNDEBUG",
-            "inherits": "gcc15",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release",
-                "TESTING": "ON"
-            }
-        },
-        {
-            "name": "GCC15_Debug",
-            "displayName": "GCC15 w/ Debug Flags: -g",
-            "inherits": "gcc15",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
-            }
-        }
-    ],
-    "buildPresets": [
-        {
-            "name": "release",
-            "displayName": "",
-            "description": "",
-            "configurePreset": "GCC15_Release"
-        },
-        {
-            "name": "debug",
-            "displayName": "",
-            "description": "",
-            "configurePreset": "GCC15_Debug"
-        }
-    ],
-    "testPresets": [
-        {
-            "name": "test",
-            "description": "",
-            "displayName": "",
-            "configurePreset": "GCC15_RelDebInfo"
-        }
-    ]
+	"version": 8,
+	"configurePresets": [
+		{
+			"name": "gcc13",
+			"displayName": "GCC 13.3.0 x86_64-linux-gnu",
+			"description": "Using compilers: C = /usr/bin/gcc, CXX = /usr/bin/g++",
+			"binaryDir": "${sourceDir}/build/${presetName}",
+			"hidden": true,
+			"cacheVariables": {
+				"CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
+				"CMAKE_C_COMPILER": "/usr/bin/gcc",
+				"CMAKE_CXX_COMPILER": "/usr/bin/g++"
+			}
+		},
+		{
+			"name": "gcc15",
+			"displayName": "GCC 15 Empty Build Type",
+			"description": "Using compilers: C = /home/vassal/spack/opt/spack/linux-zen2/gcc-15.2.0-uif35diu4hejbs5sw7k3gv2jrmnnxmkw/bin/gcc, CXX = /home/vassal/spack/opt/spack/linux-zen2/gcc-15.2.0-uif35diu4hejbs5sw7k3gv2jrmnnxmkw/bin/g++",
+			"binaryDir": "${sourceDir}/build/${presetName}",
+			"hidden": true,
+			"cacheVariables": {
+				"CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
+				"CMAKE_C_COMPILER": "/home/vassal/spack/opt/spack/linux-zen2/gcc-15.2.0-uif35diu4hejbs5sw7k3gv2jrmnnxmkw/bin/gcc",
+				"CMAKE_CXX_COMPILER": "/home/vassal/spack/opt/spack/linux-zen2/gcc-15.2.0-uif35diu4hejbs5sw7k3gv2jrmnnxmkw/bin/g++"
+			}
+		},
+		{
+			"name": "RelDebInfo_Testing",
+			"displayName": "RelDebInfo w/ Testing; Flags: -O2 -g -DNDEBUG",
+			"inherits": "gcc15",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "RelWithDebInfo",
+				"TESTING": "ON"
+			}
+		},
+		{
+			"name": "RelDebInfo",
+			"displayName": "RelDebInfo; Flags: -O2 -g -DNDEBUG",
+			"inherits": "gcc15",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "RelWithDebInfo"
+			}
+		},
+		{
+			"name": "Release_Testing",
+			"displayName": "Release w/ Testing; Flags: -O3 -DNDEBUG",
+			"inherits": "gcc15",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Release",
+				"TESTING": "ON"
+			}
+		},
+		{
+			"name": "Release",
+			"displayName": "Release; Flags: -O3 -DNDEBUG",
+			"inherits": "gcc15",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Release"
+			}
+		},
+		{
+			"name": "Debug",
+			"displayName": "Debug; Flags: -g",
+			"inherits": "gcc15",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug",
+				"CMAKE_CXX_FLAGS": "-Winvalid-constexpr"
+			}
+		},
+		{
+			"name": "Debug_Testing",
+			"displayName": "Debug w/ Testing; Flags: -g",
+			"inherits": "gcc15",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug",
+				"TESTING": "ON",
+				"CMAKE_CXX_FLAGS": "-Winvalid-constexpr"
+			}
+		}
+	],
+	"buildPresets": [
+		{
+			"name": "release",
+			"displayName": "",
+			"description": "",
+			"configurePreset": "Release_Testing"
+		}
+	],
+	"testPresets": []
 }
