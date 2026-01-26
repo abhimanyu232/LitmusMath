@@ -8,5 +8,8 @@
 *.a 
 *.s 
 
+# vscode 
+.vscode
+
 # build directories
 build*/

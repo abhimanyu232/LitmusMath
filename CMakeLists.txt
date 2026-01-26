@@ -46,38 +46,44 @@ endif()
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
 include_directories(${COMMON_INCLUDES})
 
-#### How to get these libraries to use clang, idea: add a cpp file in the library source that includes the libraries.
 ### Compile header files into a library
-## local matrix library
+## local matrix library     !!! not needed, doesnt do anything
 add_library(lm_matlib INTERFACE ${PROJECT_SOURCE_DIR}/include/matrix.h) 
 set_target_properties(lm_matlib PROPERTIES CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}")
 
-## local statistics library
+## local statistics library !!! not needed, doesnt do anything
 add_library(lm_stats INTERFACE ${PROJECT_SOURCE_DIR}/include/statistics.h)
 set_target_properties(lm_stats PROPERTIES CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}")
 
-## local time library
+## local time library       !!! not needed, doesnt do anything
 add_library(lm_timer INTERFACE ${PROJECT_SOURCE_DIR}/include/timer.h)
 set_target_properties(lm_timer PROPERTIES CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}")
 
 ## IF I needed an external library, say header only Boost 
 # target_link_libraries(lm_matlib INTERFACE Boost::Boost)
 
-### file globbing ##################################################
-file(GLOB_RECURSE sources CONFIGURE_DEPENDS src/*.cpp src/*.cc)
-## Main as a library client)
-add_executable(${PROJECT_NAME} ${sources})
-target_link_libraries(${PROJECT_NAME} lm_matlib lm_stats lm_timer)
-target_compile_options(${PROJECT_NAME} PUBLIC -std=c++23)
+### file globbing !!! not used ##################################################
+# file(GLOB_RECURSE sources CONFIGURE_DEPENDS src/*.cpp src/*.cc)
 
+### Define Targets
+
+## TARGET: Main as a library client
+add_executable(${PROJECT_NAME})
+target_sources(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/src/main.cpp)
+target_compile_options(${PROJECT_NAME} PUBLIC -std=c++23)
 # This can enable Clang-Tidy for the test executable too
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}")
+## no need to link header only libraries, simple #include directive is good enough. 
+# target_link_libraries(${PROJECT_NAME} lm_matlib lm_stats lm_timer) 
+
+## TARGET: Benchmark
+add_executable(${PROJECT_NAME}_bench)
+target_sources(${PROJECT_NAME}_bench PUBLIC ${PROJECT_SOURCE_DIR}/src/bench.cc)
+target_compile_options(${PROJECT_NAME}_bench PUBLIC -std=c++23)
+set_target_properties(${PROJECT_NAME}_bench PROPERTIES CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}")
 
 ###### hypothetical dependencies ######
-### ## ## ## ## ## ## ## ## ## ## ###
-### This defines the variables Boost_LIBRARIES that contains all library names
-### that we need to link into the program.
-### find_package(Boost 1.36.0 COMPONENTS filesystem system REQUIRED)
+# find_package(Boost 1.36.0 COMPONENTS filesystem system REQUIRED)
 # target_link_libraries(example PUBLIC
 #   ${Boost_LIBRARIES}
 #   # here you can add any library dependencies

@@ -19,24 +19,9 @@ using Time = std::chrono::steady_clock;
 using DoubleSeconds = std::chrono::duration<double>;
 using FloatTimePoint = std::chrono::time_point<Time, DoubleSeconds>;
 
-// constexpr
-FloatTimePoint getCurrentTime() {
+constexpr FloatTimePoint GetCurrentTime() {
   return Time::now();
 }
 }  // namespace timer
 
 #endif
-
-// int main() {
-
-// 	double total_timer;
-// 	for (uint16_t i = 0; i < 1000; ++i) {
-// 		auto startTime = getCurrentTime();
-// 		std::this_thread::sleep_for(5ms);
-// 		auto endTime = getCurrentTime();
-// 		total_timer += (endTime - startTime).count();
-// 		std::println("invocation time: {} \t {} ", i, endTime - startTime);
-// 	}
-
-// 	std::println(" average time: {} ", total_timer / 1000);
-// }
