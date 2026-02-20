@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cassert>
+#include <optional>
 #include <print>
 #include <span>
 #include <type_traits>
@@ -146,6 +147,42 @@ class Matrix {
 		return *this;
 	}
 
+	// matrix-scalar operations
+
+	// scalar multiply assignment *=
+	Matrix& operator*=(T scalar) noexcept {
+		for (unsigned int i = 0; i < size_; ++i) {
+			elements_[i] *= scalar;
+		}
+		return *this;
+	}
+
+	// scalar multiply assignment *= generic
+	template <typename U>
+	Matrix& operator*=(U scalar) noexcept {
+		for (unsigned int i = 0; i < size_; ++i) {
+			elements_[i] *= static_cast<T>(scalar);
+		}
+		return *this;
+	}
+
+	// scalar divide assignement /=
+	Matrix& operator/=(T scalar) noexcept {
+		for (unsigned int i = 0; i < size_; ++i) {
+			elements_[i] /= scalar;
+		}
+		return *this;
+	}
+
+	// scalar divide assignment /= generic
+	template <typename U>
+	Matrix& operator/=(U scalar) noexcept {
+		for (unsigned int i = 0; i < size_; ++i) {
+			elements_[i] /= static_cast<T>(scalar);
+		}
+		return *this;
+	}
+
 	// 1D index operator
 	const T& operator()(const size_t i) const noexcept { return elements_[i]; }
 
@@ -164,7 +201,7 @@ class Matrix {
 		return elements_[n_ * i + j];
 	}
 
-	// legal since c++23. earlier, operator could only take single subscipt.
+	// only legal since c++23. earlier, operator[] could only take single subscipt.
 	const T& operator[](const size_t i, const size_t j) const noexcept {
 		return elements_[n_ * i + j];
 	}
@@ -260,12 +297,45 @@ auto operator-(const Matrix<U>& lhs, const Matrix<V>& rhs) {
 }
 
 /**
+* @brief Binary Matrix Scalar Multiply Overload
+*/ //!!! use SFINAE HERE AS WELL, to cast from integral to float but not otherwise.
+template <typename U, typename V>
+auto operator*(const Matrix<U>& lhs_matrix, const V rhs_scalar) noexcept {
+	Matrix<typename std::common_type<U, V>::type> result(lhs_matrix);
+
+	return result *=
+				 static_cast<typename std::common_type<U, V>::type>(rhs_scalar);
+}
+
+template <typename U, typename V>
+auto operator*(const V lhs_scalar, const Matrix<U>& rhs_matrix) noexcept {
+	return rhs_matrix * lhs_scalar;
+}
+
+/**
+* @brief Binary Matrix Scalar Division Overload
+*/ //!!! use SFINAE HERE AS WELL, to cast from integral to float but not otherwise.
+template <typename U, typename V>
+auto operator/(const Matrix<U>& lhs_matrix, const V rhs_scalar) noexcept {
+	Matrix<typename std::common_type<U, V>::type> result(lhs_matrix);
+
+	return result /=
+				 static_cast<typename std::common_type<U, V>::type>(rhs_scalar);
+}
+
+template <typename U, typename V>
+auto operator/(const V lhs_scalar, const Matrix<U>& rhs_matrix) noexcept {
+	return rhs_matrix / lhs_scalar;
+}
+
+/**
 * std::formatter overloads : easy printing 
 */
 
 /**
  * @brief overload std::formatter for using std::print and std::println
  * prints matrix in with its given shape.
+ * 
  * todo: use SFINAE to differ bw integral and floating point  
  */
 template <typename U>
@@ -294,6 +364,7 @@ struct std::formatter<Matrix<U>> {
 /**
  * @brief overload std::formatter for using std::print and std::println
  * prints matrix in with its given shape.
+ * 
  *  template specialisation for Matrix<int> 
  *  todo: use SFINAE to make this work with all std::integral
 */
@@ -332,8 +403,8 @@ struct std::formatter<Matrix<int>> {
 template <typename T>
 auto MatrixTransposeNaive(const Matrix<T>& input_matrix) {
 
-	size_t M = input_matrix.shape().first;	 // rows of og matrix
-	size_t N = input_matrix.shape().second;	 // columns of og matrix
+	const size_t M = input_matrix.shape().first;	 // rows of og matrix
+	const size_t N = input_matrix.shape().second;	 // columns of og matrix
 	std::vector<T> txp_vector(input_matrix.size(), 0);
 
 	for (size_t k = 0; k < M * N; ++k) {
@@ -350,24 +421,22 @@ auto MatrixTransposeNaive(const Matrix<T>& input_matrix) {
 */
 
 /** 
-* @brief Multiplies two compatible matrices, A=MxP & B=PxN using objects of Matrix class. \
-* @brief assert(A.P == B.P);
+* @brief Multiplies two compatible matrices, matrixA=MxP & matrixB=PxN using objects of Matrix class.
+* @brief assert(matrixA.P == matrixB.P);
 * @param Matrix<T> and Matrix<U> 
 * @return Matrix<typename std::common_type<U, V>::type> C of shape M*N
 * 
 */
 template <typename U, typename V>
-auto matMultBasic(const Matrix<U>& A, const Matrix<V>& B) {
+auto matMultBasic(const Matrix<U>& matrixA, const Matrix<V>& matrixB) {
 
 	// the resultant matrix should be converted to appropriate type
 	using common_t = typename std::common_type<U, V>::type;
 
-	// const auto [a_rows,a_columns] = A.shape();
-	// const auto [b_rows,b_columns] = B.shape();
-	const size_t m = A.shape().first;
-	const size_t p = A.shape().second;
-	// A.n_ == B.m_ --> common index to sum over for the innermost loop
-	const size_t n = B.shape().second;
+	const size_t M = matrixA.shape().first;
+	const size_t P = matrixA.shape().second;
+	// matrixA.n_ == matrixB.m_ --> common index to sum over for the innermost loop
+	const size_t N = matrixB.shape().second;
 
 	/** // todo:
 	* !!! do you need to make this object here. 
@@ -375,20 +444,20 @@ auto matMultBasic(const Matrix<U>& A, const Matrix<V>& B) {
 	* !!! store result in an vector/array 
 	* !!! and then construct eg. : return Matrix<common_t>(result,m_, n_);
 	*/
-	Matrix<common_t> result(m, n);
+	Matrix<common_t> result(M, N);
 
-	// todo: combine the first two loops. (i = 0; i<m*n; ++i)
-	for (size_t i = 0; i < m; ++i) {
-		for (size_t j = 0; j < n; ++j) {
-			size_t res_idx = n * i + j;
+	// todo: combine the first two loops. (i = 0; i<M*N; ++i)
+	for (size_t i = 0; i < M; ++i) {
+		for (size_t j = 0; j < N; ++j) {
+			size_t res_idx = N * i + j;
 			// float_type temp_sum  = 0.0F;
-			for (size_t k = 0; k < p; ++k) {
-				size_t a_idx = p * i + k;
-				size_t b_idx = n * k + j;
-				result[res_idx] += A[a_idx] * B[b_idx];
+			for (size_t k = 0; k < P; ++k) {
+				size_t a_idx = P * i + k;
+				size_t b_idx = N * k + j;
+				result[res_idx] += matrixA[a_idx] * matrixB[b_idx];
 				// todo: repeated memory access to result[idx].
 				// todo: instead store in temp and update value at the end of the loop.
-				// temp_sum += A[a_idx] * B[b_idx];
+				// temp_sum += matrixA[a_idx] * matrixB[b_idx];
 			}
 			// result[res_idx] += temp_sum;
 		}
@@ -397,37 +466,38 @@ auto matMultBasic(const Matrix<U>& A, const Matrix<V>& B) {
 }
 
 /** 
-* @brief Multiple A=MxP & B=PxN by first transposing B to improve memory access patter
+* @brief Multiply matrixA=MxP & matrixB=PxN by first transposing matrixB to improve memory access patter
 * @param 
 * @return Matrix<typename std::common_type<U, V>::type>  C=M*N
 */
-// assert(A.P == B.P);
+// assert(matrixA.P == matrixB.P);
 template <typename U, typename V>
-auto MatMultTxp(const Matrix<U>& A, const Matrix<V>& B) {
+auto MatMultTxp(const Matrix<U>& matrixA, const Matrix<V>& matrixB) {
 	using common_t = typename std::common_type<U, V>::type;
 
-	// const auto [a_rows,a_columns] = A.shape();
-	// const auto [b_rows,b_columns] = B.shape();
-	const size_t m = A.shape().first;
-	const size_t p = A.shape().second;
-	const size_t n = B.shape().second;
+	// const auto [a_rows,a_columns] = matrixA.shape();
+	// const auto [b_rows,b_columns] = matrixB.shape();
+	const size_t M = matrixA.shape().first;
+	const size_t P = matrixA.shape().second;
+	const size_t N = matrixB.shape().second;
 
-	auto B_T = MatrixTransposeNaive(B);
-	assert(p == B_T.shape().second);
+	auto matrixB_Txp = MatrixTransposeNaive(matrixB);
+	assert(P == matrixB_Txp.shape().second);
 
-	Matrix<common_t> result(m, n);
+	Matrix<common_t> result(M, N);
 
-	// todo: combine the first two loops. (i = 0; i<m*n; ++i) { }
-	for (size_t i = 0; i < m; ++i) {
-		for (size_t j = 0; j < n; ++j) {
-			size_t res_idx = n * i + j;
-			size_t a_idx = (p * i);
-			size_t b_idx = (p * j);	 // B_T.shape().second* j;
-			for (size_t k = 0; k < p; ++k) {
-				result[res_idx] += A[a_idx] * B_T[b_idx];
-				a_idx += 1;	 // (p * i) + k;
-				b_idx += 1;	 // (p * j) + k;
-										 // todo: repeated memory access to result[idx].
+	// todo: combine the first two loops. (i = 0; i<M*N; ++i) { }
+	for (size_t i = 0; i < M; ++i) {
+		for (size_t j = 0; j < N; ++j) {
+			size_t res_idx = N * i + j;
+			size_t a_idx = (P * i);
+			size_t b_idx = (P * j);	 // B_T.shape().second* j;
+			for (size_t k = 0; k < P; ++k) {
+				result[res_idx] += matrixA[a_idx] * matrixB_Txp[b_idx];
+				a_idx += 1;	 // (P * i) + k;
+				b_idx += 1;	 // (P * j) + k;
+
+				// todo: repeated memory access to result[idx].
 				// todo: instead store in temp and update value at the end of the loop.
 			}
 		}
@@ -436,39 +506,306 @@ auto MatMultTxp(const Matrix<U>& A, const Matrix<V>& B) {
 	return result;
 }
 
+//todo: Matrix class member function: generate a matrix "view" of a subrange of the matrix
+/**
+ * @brief Wrapper for calling the cache ambivalent Strassen algorithm for Matrix Multiplication 
+ * 
+ * @tparam U 
+ * @tparam V 
+ * @param matrixA 
+ * @param matrixB 
+ * @return auto 
+ */
+template <typename U, typename V>
+auto MatMultStrassen(const Matrix<U>& matrixA, const Matrix<V>& matrixB,
+										 const bool do_full_strassen = false) {
+	using common_t = typename std::common_type<U, V>::type;
+	const size_t M = matrixA.shape().first;
+	const size_t P = matrixA.shape().second;
+	const size_t Q = matrixB.shape().first;	 // assert (P==Q);
+	const size_t N = matrixB.shape().second;
+
+	assert(P == Q);
+
+	// todo!!!: IMPLEMENT PadMatrix, MatMultStrassen_Impl
+	// step1: pad the matrices if the size is not power of two.
+	size_t size_to_pad = 0;
+
+	auto matrixA_padded = PadMatrix(matrixA, size_to_pad);
+	auto matrixB_padded = PadMatrix(matrixB, size_to_pad);
+	// step2: pass to strassen recursive wrapper
+	auto result_padded =
+		MatMultStrassen_Impl(matrixA_padded, matrixB_padded, do_full_strassen);
+
+	auto result = result_padded;
+	// Matrix<common_t> result(M, N);
+	return result;
+}
+
+/**
+ * @brief Helper function to pad matrix to the nearest power of 2 for use with Strassen Algorithm.
+ * !!!todo: implement padding if needed. 
+ * @param Matrix<U> inputMatrix 
+ * @param size_t paddingSize 
+ * @return Matrix<U> 
+ */
+template <typename U>
+Matrix<U> PadMatrix(Matrix<U> inputMatrix, const size_t paddingSize = 0) {
+	if (paddingSize == 0)
+		return inputMatrix;
+	else
+		std::println("padding method not implemented");
+}
+
+/// @brief Implementation of Strassens Algorithm for Matrix Multiplication
+///
+/// For small matrices, option of delegating to standard matmul or
+/// continue with Strassen's till the matrix is too small to subdivide (not recommended)
+/// @param Matrix<U> matrixA
+/// @param Matrix<V> matrixB
+/// @return Matrix<common_type<U, V>> res_matrix
+template <typename U, typename V>
+Matrix<typename std::common_type<U, V>::type> MatMultStrassen_Impl(
+	const Matrix<U>& matrixA, const Matrix<V>& matrixB,
+	bool do_full_strassen = false) {
+
+	const size_t threshold = 1024;	// 32x32, 2^10, n = 10
+
+	// for a small enough matrix, do standard matrix multiplication
+	if (!do_full_strassen && (matrixA.size() <= threshold)) [[unlikely]] {
+
+		return matMultBasic(matrixA, matrixB);
+
+		// handle a 2x2 matrix using Strassens, lowest size square matrix
+	} else if (do_full_strassen && (matrixA.size() == 4)) [[unlikely]] {
+
+		// no need to call getQuad, elements accessible directly.
+		auto quadMatrixVectorA = matrixA.elements();	// copy data
+		auto quadMatrixVectorB = matrixB.elements();
+
+		auto M1 = (quadMatrixVectorA[0] + quadMatrixVectorA[3]) *
+							(quadMatrixVectorB[0] + quadMatrixVectorB[3]);
+
+		auto M2 =
+			(quadMatrixVectorA[2] + quadMatrixVectorA[3]) * (quadMatrixVectorB[0]);
+
+		auto M3 =
+			(quadMatrixVectorA[0]) * (quadMatrixVectorB[1] - quadMatrixVectorB[3]);
+
+		auto M4 =
+			(quadMatrixVectorA[3]) * (quadMatrixVectorB[2] - quadMatrixVectorB[0]);
+
+		auto M5 =
+			(quadMatrixVectorA[0] + quadMatrixVectorA[1]) * (quadMatrixVectorB[3]);
+
+		auto M6 = (quadMatrixVectorA[2] - quadMatrixVectorA[0]) *
+							(quadMatrixVectorB[0] + quadMatrixVectorB[1]);
+
+		auto M7 = (quadMatrixVectorA[1] - quadMatrixVectorA[3]) *
+							(quadMatrixVectorB[2] + quadMatrixVectorB[3]);
+
+		auto C11 = M1 + M4 - M5 + M7;
+		auto C12 = M3 + M5;
+		auto C21 = M2 + M4;
+		auto C22 = (M1 - M2) + (M3 + M6);
+
+		std::vector<typename std::common_type<U, V>::type> assembledVector{
+			C11, C12, C21, C22};
+
+		return Matrix<typename std::common_type<U, V>::type>(assembledVector, 2, 2);
+
+	} else	// continue with Strassen's algorithm, and partition the matrix further
+	{
+		// split the matrix into quads.
+		// A11 = quadMatrixVectorA[0], A12 = quadMatrixVectorA[1], A21 = quadMatrixVectorA[2], A22 = quadMatrixVectorA[3]
+		auto quadMatrixVectorA = getQuadMatrices(matrixA);
+
+		// B11 = quadMatrixVectorB[0], B12 = quadMatrixVectorB[1], B21 = quadMatrixVectorB[2],  B22 = quadMatrixVectorB[3]
+		auto quadMatrixVectorB = getQuadMatrices(matrixB);
+
+		/* recursive calls
+				Matrix_t M1 = MatMultStrassen_Impl(A11 + A22, B11 + B22);
+        Matrix_t M2 = MatMultStrassen_Impl(A21 + A22, B11);
+        Matrix_t M3 = MatMultStrassen_Impl(A11, B12 - B22);
+        Matrix_t M4 = MatMultStrassen_Impl(A22, B21 - B11);
+        Matrix_t M5 = MatMultStrassen_Impl(A11 + A12, B22);
+        Matrix_t M6 = MatMultStrassen_Impl(A21 - A11, B11 + B12);
+        Matrix_t M7 = MatMultStrassen_Impl(A12 - A22, B21 + B22);
+		*/
+		auto M1 = MatMultStrassen_Impl(quadMatrixVectorA[0] + quadMatrixVectorA[3],
+																	 quadMatrixVectorB[0] + quadMatrixVectorB[3]);
+		auto M2 = MatMultStrassen_Impl(quadMatrixVectorA[2] + quadMatrixVectorA[3],
+																	 quadMatrixVectorB[0]);
+		auto M3 = MatMultStrassen_Impl(quadMatrixVectorA[0],
+																	 quadMatrixVectorB[1] - quadMatrixVectorB[3]);
+		auto M4 = MatMultStrassen_Impl(quadMatrixVectorA[3],
+																	 quadMatrixVectorB[2] - quadMatrixVectorB[0]);
+		auto M5 = MatMultStrassen_Impl(quadMatrixVectorA[0] + quadMatrixVectorA[1],
+																	 quadMatrixVectorB[3]);
+		auto M6 = MatMultStrassen_Impl(quadMatrixVectorA[2] - quadMatrixVectorA[0],
+																	 quadMatrixVectorB[0] + quadMatrixVectorB[1]);
+		auto M7 = MatMultStrassen_Impl(quadMatrixVectorA[1] - quadMatrixVectorA[3],
+																	 quadMatrixVectorB[2] + quadMatrixVectorB[3]);
+		/*
+        Matrix_t C11 = M1 + M4 - M5 + M7;
+        Matrix_t C12 = M3 + M5;           
+        Matrix_t C21 = M2 + M4;
+        Matrix_t C22 = M1 - M2 + M3 + M6;
+		*/
+		auto C11 = (M1 + M4) - M5 + M7;
+		auto C12 = M3 + M5;
+		auto C21 = M2 + M4;
+		auto C22 = (M1 - M2) + (M3 + M6);
+
+		return assembleMatrixfromQuads(C11, C12, C21, C22);
+	}
+
+	// return std::nullopt;
+}
+
+//todo: should be a member function, so that you can do matrix.getQuads();
+/**
+ * @brief Subdivide the matrix into 4 quad matrices and return as a vector of matrix objects
+ * 
+ * @param Matrix<T> matrixA 
+ * @return std::vector<Matrix<T>> quadMatrices
+ */
+template <typename T>
+auto getQuadMatrices(const Matrix<T>& matrixA) {
+	// todo: possible check to see if the matrix is able to be split i.e if matrixA.size() >= 4
+
+	std::vector<T> matrix_data = matrixA.elements();	// copy data
+	size_t matrix_size = matrixA.size();
+	size_t half_matrix_size = 0.5 * matrix_size;
+
+	// shape(m,n) = rows x cols = (rows=ny,cols=nx)
+	size_t matA_nrows = matrixA.shape().first;	 // num rows
+	size_t matA_ncols = matrixA.shape().second;	 // num cols
+
+	//!!! todo : prior check if shape is divisible by 2.
+	size_t quad_mat_nrows = 0.5 * matA_nrows;
+	size_t quad_mat_ncols = 0.5 * matA_ncols;
+
+	std::vector<std::vector<T>> quad_vectors(4);
+	// each vector has size quad_mat_ncols*quad_mat_nrows
+
+	// load each row ; stride = number of cols.
+	for (size_t j = 0, i = 0; i < matrix_size; i += matA_ncols) {
+
+		j = 2 * std::floor(i / half_matrix_size);
+
+		quad_vectors[j].insert(quad_vectors[j].end(),
+													 std::next(matrix_data.begin(), i),
+													 std::next(matrix_data.begin(), i + quad_mat_ncols));
+
+		quad_vectors[j + 1].insert(
+			quad_vectors[j + 1].end(),
+			std::next(matrix_data.begin(), i + quad_mat_ncols),
+			std::next(matrix_data.begin(), i + matA_ncols));
+	}
+
+	// std::forward??
+	return std::vector<Matrix<T>>{
+		Matrix<T>(quad_vectors[0], quad_mat_nrows, quad_mat_ncols),
+		Matrix<T>(quad_vectors[1], quad_mat_nrows, quad_mat_ncols),
+		Matrix<T>(quad_vectors[2], quad_mat_nrows, quad_mat_ncols),
+		Matrix<T>(quad_vectors[3], quad_mat_nrows, quad_mat_ncols)};
+}
+
+/**
+ * @brief Assemble a full matrix from four quad-matrices. 
+ * 
+ * @tparam U 
+ * @param matrix11 
+ * @param matrix12 
+ * @param matrix21 
+ * @param matrix22 
+ * @return const Matrix<U> assembled_matrix
+ */
+template <typename U>
+Matrix<U> assembleMatrixfromQuads(const Matrix<U>& matrix11,
+																	const Matrix<U>& matrix12,
+																	const Matrix<U>& matrix21,
+																	const Matrix<U>& matrix22) {
+
+	//!!! todo : prior check if shape is divisible by 2.
+	size_t quad_mat_nrows = matrix11.shape().first;
+	size_t quad_mat_ncols = matrix11.shape().second;
+
+	// shape(m,n) = rows x cols = (rows=ny,cols=nx)
+	size_t assm_mat_nrows = quad_mat_nrows * 2;	 // num rows
+	size_t assm_mat_ncols = quad_mat_nrows * 2;	 // num cols
+	size_t assm_mat_size = assm_mat_nrows * assm_mat_ncols;
+	size_t half_assm_mat_size = 0.5 * assm_mat_size;
+
+	std::vector<U>
+		assembled_matrix_vector;	// un-init size. to init assembled_matrix_vector(assm_mat_size)
+
+	std::vector<std::vector<U>> quad_vectors(4);
+	quad_vectors[0].insert(quad_vectors[0].end(), matrix11.elements().begin(),
+												 matrix11.elements().end());
+	quad_vectors[1].insert(quad_vectors[1].end(), matrix12.elements().begin(),
+												 matrix12.elements().end());
+	quad_vectors[2].insert(quad_vectors[2].end(), matrix21.elements().begin(),
+												 matrix21.elements().end());
+	quad_vectors[3].insert(quad_vectors[3].end(), matrix22.elements().begin(),
+												 matrix22.elements().end());
+
+	// i = 0,1,2....assm_nrows.
+	for (size_t j = 0, k = 0, i = 0; i < assm_mat_nrows; i++) {
+
+		j = 2 * (std::floor(i / (quad_mat_nrows)));
+		// i=0,1,2,3 -> j = 0 ; i=4,5,6,7 -> j = 2 if for example given that assm_mat_nrows = 8.
+		k = (i % (quad_mat_nrows)) * quad_mat_ncols;
+
+		assembled_matrix_vector.insert(
+			assembled_matrix_vector.end(), std::next(quad_vectors[j].begin(), k),
+			std::next(quad_vectors[j].begin(), k + quad_mat_ncols));
+
+		assembled_matrix_vector.insert(
+			assembled_matrix_vector.end(), std::next(quad_vectors[j + 1].begin(), k),
+			std::next(quad_vectors[j + 1].begin(), k + quad_mat_ncols));
+	}
+
+	return Matrix<U>(assembled_matrix_vector, assm_mat_nrows, assm_mat_ncols);
+}
+
 // !!! this is not really cstyle is it if its not using pointers.
 // todo: make this with std::unique_pointer instead of spans.
 /** 
-*  @brief C = A*B with A=MxP & B=PxN in C-style without overhead of Classes etc.
+*  @brief C = matrixA*matrixB with matrixA=MxP & matrixB=PxN in C-style without overhead of Classes etc.
+*
 * takes an array or vector or pointer to contiguous memory here, 
 * and uses std::span as a non-owning reference to multiple two matrices.
+*
 * additionally takes the shape of the incoming matrices as a std::pair each.
-* assert(A.P == B.P);
+* assert(matrixA.P == matrixB.P);
 * @return Matrix<typename std::common_type<U, V>::type> C of shape M*N
 */
 template <typename U, typename V>
-auto cStyle_matMultBasic(std::span<const U> A, std::pair<size_t, size_t> shapeA,
-												 std::span<const V> B,
+auto cStyle_matMultBasic(std::span<const U> matrixA,
+												 std::pair<size_t, size_t> shapeA,
+												 std::span<const V> matrixB,
 												 std::pair<size_t, size_t> shapeB) {
 
 	// the resultant matrix should be converted to appropriate type
 	using common_t = typename std::common_type<U, V>::type;
 
-	const size_t m = shapeA.first;
-	const size_t p = shapeA.second;
+	const size_t M = shapeA.first;
+	const size_t P = shapeA.second;
 	// shapeA.second == shapeB.first --> common index to sum over for the innermost loop
-	const size_t n = shapeB.second;
+	const size_t N = shapeB.second;
 
-	std::vector<common_t> result(m * n, 0.);
+	std::vector<common_t> result(M * N, 0.);
 
-	for (size_t i = 0; i < m; ++i) {
-		for (size_t j = 0; j < n; ++j) {
-			size_t res_idx = n * i + j;
-			for (size_t k = 0; k < p; ++k) {
-				size_t a_idx = p * i + k;
-				size_t b_idx = n * k + j;
+	for (size_t i = 0; i < M; ++i) {
+		for (size_t j = 0; j < N; ++j) {
+			size_t res_idx = N * i + j;
+			for (size_t k = 0; k < P; ++k) {
+				size_t a_idx = P * i + k;
+				size_t b_idx = N * k + j;
 
-				result[res_idx] += A[a_idx] * B[b_idx];
+				result[res_idx] += matrixA[a_idx] * matrixB[b_idx];
 			}
 		}
 	}

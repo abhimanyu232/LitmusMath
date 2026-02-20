@@ -8,14 +8,21 @@
 #include <ranges>
 #include <span>
 
-#include "../include/common.h"
+// user-defined includes
+#include "common.h"
 
 struct Statistics {
+	float_type sum = 0;
   float_type mean = 0.;
   float_type variance = 0.;
   float_type sample_variance = 0.;
   float_type median = 0;
   float_type geometric_mean = 1;
+
+	Statistics(){}
+	
+	template <typename T>
+	Statistics ( std::span<T> in_data ) { UpdateSummaryStats(in_data); }
 
   /// @brief get standard stats : mean variance and median of any input of contiguous data.
   /// @tparam T
@@ -23,14 +30,13 @@ struct Statistics {
   template <typename T>
   void UpdateSummaryStats(std::span<T> data) {
 
-	float_type running_sum = 0.;
 	float_type running_sum_sqr = 0.;
 	for (const auto ele : data) {
-	  running_sum += ele;
+	  sum += ele;
 	  running_sum_sqr += ele * ele;
 	}
 
-	mean = running_sum / data.size();
+	mean = sum / data.size();
 
 	// todo: should not do this, suffers from catastrophic cancellation
 	// https://en.wikipedia.org/wiki/Catastrophic_cancellation
@@ -104,6 +110,7 @@ struct Statistics {
 
   /// @brief reset all the stats to 0.
   void ResetSummaryStats() {
+	sum = 0.;	
 	mean = 0.;
 	geometric_mean = 0.;
 	variance = 0.;

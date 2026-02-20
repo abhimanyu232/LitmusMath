@@ -124,7 +124,17 @@ TEST_F(MatrixTest, MatrixSimpleArithmetic) {
 	}
 }
 
-TEST_F(MatrixTest, MatrixMultiplication) {
+// TEST_F(MatrixTest, MatrixManipulation) {
+
+// 	auto transposed_int_matrix = MatrixTransposeNaive(iMatrix1);
+// 	for (size_t i = 0; i < iMatrix1.size(); ++i) {
+// 		// EXPECT_EQ();
+// 	}
+// 	auto transposed_float_matrix = MatrixTransposeNaive(fMatrix1);
+// 	// todo: add test statements
+// }
+
+TEST_F(MatrixTest, MatrixMultiplicationNaive) {
 
 	// multiply int matrices
 	Matrix<int> matrix_matmult_ivec12 =
@@ -177,16 +187,6 @@ TEST_F(MatrixTest, MatrixMultiplication) {
 	}
 }
 
-TEST_F(MatrixTest, MatrixManipulation) {
-
-	auto transposed_int_matrix = MatrixTransposeNaive(iMatrix1);
-	for (size_t i = 0; i < iMatrix1.size(); ++i) {
-		// EXPECT_EQ();
-	}
-	auto transposed_float_matrix = MatrixTransposeNaive(fMatrix1);
-	// todo: add test statements
-}
-
 TEST_F(MatrixTest, MatrixMultiplicationTransposed) {
 
 	// use the transposed matrix multiplication to improve cache hits
@@ -201,4 +201,57 @@ TEST_F(MatrixTest, MatrixMultiplicationTransposed) {
 		EXPECT_TRUE(
 			(std::fabs(matrix_matmult_fivec[i] - result_matmult_fivec[i]) <= 1e-8));
 	}
+}
+
+TEST_F(MatrixTest, MatrixMultiplicationStrassen) {
+
+	constexpr size_t n_row = 64;
+	constexpr size_t n_col = 64;
+	constexpr size_t size_matrix = n_row * n_col;
+
+	// Test: multiply matrix with identity  
+	std::vector<float_type> identity_matrix_vector(size_matrix, 0);
+	// nrows = 64, ncols = stride = 64
+	for (size_t i = 0, j = 0; i < n_row; i++) {
+		identity_matrix_vector[n_col * i + i] = 1;
+	}
+	Matrix<float_type> identity_matrix(identity_matrix_vector, n_row, n_col);
+
+	auto rndm_vec = GetUniformRandomNumbers<size_matrix>(0, 1, 42);
+	Matrix<float_type> rndm_matrixA(rndm_vec, n_row, n_col);
+
+	auto result_AI = MatMultStrassen(rndm_matrixA, identity_matrix);
+
+	// Check : A x I = A 
+	for (size_t i = 0; i < result_AI.size(); ++i) {
+		EXPECT_TRUE(std::fabs(result_AI[i] - rndm_vec[i]) <= 1e-8);
+	}
+
+	// Test: multiply matrix with Diagonal matrix (scaling)
+	float scalar = 5.49;
+	auto diagonal_matrix = scalar*identity_matrix;
+
+	auto result_diagonal_scalar = MatMultStrassen(diagonal_matrix, rndm_matrixA);
+	// check : C = D x A  => C[ij] = d*A[ij]
+	for (size_t i = 0; i < result_diagonal_scalar.size(); ++i) {
+		EXPECT_TRUE(std::fabs(result_diagonal_scalar[i] - scalar*rndm_vec[i]) <= 1e-8);
+	}
+
+	// Test: constant matrix multiplication
+	float f_constant1 = 3.0;
+	std::vector<float_type> const1_matrix_vector(size_matrix, f_constant1);
+	Matrix<float_type> const1_matrix(const1_matrix_vector, n_row, n_col);
+
+	float f_constant2 = 4.5;
+	std::vector<float_type> const2_matrix_vector(size_matrix, f_constant2);
+	Matrix<float_type> const2_matrix(const2_matrix_vector, n_row, n_col);
+
+	auto result_c1c2 =  MatMultStrassen(const2_matrix, const1_matrix);
+	// check : C = A x B => C[ij] = nrow * (f_constant1 * f_constant2)
+	for (size_t i = 0; i < result_diagonal_scalar.size(); ++i) {
+		EXPECT_TRUE(std::fabs(result_c1c2[i] - (n_row*(f_constant1*f_constant2))) <= 1e-8);
+	}
+
+
+
 }
