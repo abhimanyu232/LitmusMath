@@ -14,10 +14,10 @@
 
 **Dependencies and Requirements**
 * Compiler : Tested with `g++-14` and above with `--std=c++23`
-* * Makes uses `<print>`, `<span>`, and `<mdspan>` .
+* *  uses `<print>`, `<span>`, and `<ranges>` .
 * MPI : OpenMPI or equivalent
 
-Currently in development, not intended for use yet.  
+currently under development, not intended for use yet.  
 
 **Build instructions:** 
 ---
@@ -29,6 +29,9 @@ Currently in development, not intended for use yet.
 
     * Default Testing = OFF 
 
+**Some Preliminary Benchmarks**
+---
+![Matrix Multiplication](/benchmarks/images/bench_matmult.png)
 
 **Testing** 
 ---
@@ -36,4 +39,4 @@ Implemented using GoogleTest and is fetched by CMake during build.
 
 **Authors**
 ---
-Dr. Abhimanyu Bhadauria
+Dr. Abhimanyu Bhadauria, Ph.D

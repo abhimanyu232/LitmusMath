@@ -5,11 +5,11 @@
 
 using float_type = double;
 
-// values 
+// values
 
 /** @brief value of pi */
-template<typename T>
-constexpr T pi{ 3.1415926535897932385 };
+template <typename T>
+constexpr T pi{3.1415926535897932385};
 
 // todo:
 template <typename T>
@@ -20,6 +20,19 @@ constexpr T KahanSum(const T& a, const T& b) {
 template <typename T>
 constexpr T PairwiseSum(const T& a, const T& b) {
 	return a + b;
+}
+
+/**
+/// @brief Calculates the next power of two greater than or equal to input
+/// @tparam T : type of input
+/// @param input : some number
+/// @return value: input if it is a power of two else the next largest power of two 
+*/
+template <typename T>
+constexpr auto GetNextPowerOfTwo(T input) {
+	return (std::floor(std::log2(input)) == std::log2(input))
+					 ? input
+					 : std::pow(2, std::floor(std::log2(input)) + 1);
 }
 
 /**
@@ -44,6 +57,27 @@ inline std::vector<float_type> GetUniformRandomNumbers(
 	return out;
 }
 
+/**
+/// @brief get n uniformly distributed random floating point numbers in range [min,max)
+/// @param n: number of random numbers to generate
+/// @param min,max : range of random numbers. default [0,1)
+/// @param seed: seed for random number generator, default: std::random_device
+/// @return std::vector<float_type> of size size
+*/
+inline std::vector<float_type> GetUniformRandomNumbers(
+	const size_t SIZE = 1, float_type min = 0.F, float_type max = 1.0F,
+	uint64_t seed = std::random_device{}()) {
+	std::mt19937_64 rng(seed);	// Mersenne Twister 64-bit
+	std::uniform_real_distribution<float_type> dist(min, max);	// [0,1)
+
+	std::vector<float_type> out(SIZE);
+	for (std::size_t i = 0; i < SIZE; ++i) {
+		out[i] = dist(rng);
+	}
+
+	return out;
+}
+
 /** 
 /// @brief get n normally distributed/gaussian random floating point numbers with (mean,standard deviation)
 /// @param n: number of random numbers to generate
@@ -54,6 +88,27 @@ inline std::vector<float_type> GetUniformRandomNumbers(
 template <size_t SIZE>
 inline std::vector<float_type> GetNormalRandomNumbers(
 	float_type mean = 0.F, float_type std_dev = 1.0F,
+	uint64_t seed = std::random_device{}()) {
+	std::mt19937_64 rng(seed);
+	std::normal_distribution<float_type> dist(mean, std_dev);
+
+	std::vector<float_type> out(SIZE);
+	for (std::size_t i = 0; i < SIZE; ++i) {
+		out[i] = dist(rng);
+	}
+
+	return out;
+}
+
+/** 
+/// @brief get n normally distributed/gaussian random floating point numbers with (mean,standard deviation)
+/// @param n: number of random numbers to generate
+/// @param mean,std_dev : mean and standard deviation of gaussian sample, default (0,1)
+/// @param seed: seed for random number generator, default: std::random_device
+/// @return std::vector<float_type> of size SIZE
+*/
+inline std::vector<float_type> GetNormalRandomNumbers(
+	const size_t SIZE = 1, float_type mean = 0.F, float_type std_dev = 1.0F,
 	uint64_t seed = std::random_device{}()) {
 	std::mt19937_64 rng(seed);
 	std::normal_distribution<float_type> dist(mean, std_dev);
