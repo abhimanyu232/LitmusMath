@@ -16,7 +16,7 @@ int main() {
 	 * size, number of iterations, whether to write to file 
 	*/
 	size_t size_min_exp = 2;
-	size_t size_max_exp = 9;
+	size_t size_max_exp = 10;
 	const size_t niter = 100;
 
 	bool writeStatsFile = true;	 // whether to write benchmark files
@@ -55,7 +55,7 @@ int main() {
 
 		result1 = timer::benchmark::benchmark_function(fname, writeStatsFile, niter,
 																									 size_vec, mattxp_f, matA);
-																									 
+
 		if (result1.size() == size_t(GetUniformRandomNumbers()[0]))	 result1 += result1;
 	}
 
