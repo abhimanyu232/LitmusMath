@@ -25,9 +25,12 @@ currently under development, not intended for use.
 
 2. Build and Compile: ` cmake --build build `
 
-    *  Default CMAKE_BUILD_TYPE = RelWithDebInfo
+    * Default CMAKE_BUILD_TYPE = RelWithDebInfo
 
     * Default Testing = OFF 
+
+3.  Run Benchmarks: `./run_bench_mm <min_pow_2_size> <max_pow_2_size> <n_iterations>` </br>
+	*	default config: `./run_bench_mm 2 9 100`
 
 **Current Features**
 ---
@@ -52,9 +55,9 @@ Hardware: AMD 5800X3D, 4.1GHz, 32GB DDR4
 Compiler: `gcc15` <br>
 Flags: `-std=c++23 -O2 -g ` 
 
-![Matrix Multiplication [FP64]](/benchmarks/images/Matrix_Multiplication_[FP64].png "Double Precision Matrix Multiplication")
+![Matrix Multiplication [FP64]](/data/benchmarks/images/Matrix_Multiplication_[FP64].png "Double Precision Matrix Multiplication")
 
-![Matrix Multiplication [FP34]](/benchmarks/images/Matrix_Multiplication_[FP32].png "Single Precision Matrix Multiplication")
+![Matrix Multiplication [FP34]](/data/benchmarks/images/Matrix_Multiplication_[FP32].png "Single Precision Matrix Multiplication")
 
 **Planned Features** 
 ---
