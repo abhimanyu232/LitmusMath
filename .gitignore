@@ -13,3 +13,6 @@
 
 # build directories
 build*/
+
+# result directories
+data/raw

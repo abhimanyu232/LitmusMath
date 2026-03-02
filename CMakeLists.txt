@@ -67,6 +67,7 @@ set_target_properties(lm_timer PROPERTIES CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY
 
 ### Define Targets
 
+
 ## TARGET: Main as a library client
 add_executable(${PROJECT_NAME})
 target_sources(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/src/main.cpp)
@@ -77,10 +78,11 @@ set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CLANG_TIDY "${CMAKE_CXX_CLA
 # target_link_libraries(${PROJECT_NAME} lm_matlib lm_stats lm_timer) 
 
 ## TARGET: Benchmark
-add_executable(${PROJECT_NAME}_bench)
-target_sources(${PROJECT_NAME}_bench PUBLIC ${PROJECT_SOURCE_DIR}/src/bench.cc)
-target_compile_options(${PROJECT_NAME}_bench PUBLIC -std=c++23)
-set_target_properties(${PROJECT_NAME}_bench PROPERTIES CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}")
+set(TargetBenchMM run_bench_mm)
+add_executable(${TargetBenchMM})
+target_sources(${TargetBenchMM} PUBLIC ${PROJECT_SOURCE_DIR}/src/bench_mm.cc)
+target_compile_options(${TargetBenchMM} PUBLIC -std=c++23)
+set_target_properties(${TargetBenchMM} PROPERTIES CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}")
 
 ###### hypothetical dependencies ######
 # find_package(Boost 1.36.0 COMPONENTS filesystem system REQUIRED)
