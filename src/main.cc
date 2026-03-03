@@ -1,11 +1,11 @@
 #include <print>
 // user-defined includes
-#include "../include/common.h"
-#include "../include/timer.h"
+#include "common.h"
 
 // user-defined libraries
-#include "../include/matrix.h"
-#include "../include/statistics.h"
+#include "../libs/serial/matrix.h"
+#include "../libs/serial/statistics.h"
+#include "../libs/serial/timer.h"
 
 int main() {
 

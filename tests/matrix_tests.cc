@@ -1,8 +1,9 @@
 #include <gtest/gtest.h>
 #include <cmath>
 #include <print>
-#include "../include/common.h"
-#include "../include/matrix.h"
+#include "common.h"
+
+#include "../libs/serial/matrix.h"
 
 class MatrixTest : public testing::Test {
  protected:

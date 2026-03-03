@@ -19,7 +19,7 @@ FetchContent_MakeAvailable(googletest)
 ### OR 
 # enable_testing()
 
-file(GLOB_RECURSE sources_test CONFIGURE_DEPENDS *.cpp *.cc)
+file(GLOB_RECURSE sources_test CONFIGURE_DEPENDS *.cc)
 
 set(TEST_NAME ${PROJECT_NAME}_tests)
 add_executable(${TEST_NAME} ${sources_test})

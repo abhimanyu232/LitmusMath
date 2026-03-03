@@ -1,6 +1,6 @@
-#include "../include/statistics.h"
 #include <gtest/gtest.h>
-#include "../include/common.h"
+#include "common.h"
+#include "../libs/serial/statistics.h"
 
 class StatisticsTest : public testing::Test {
  protected:
