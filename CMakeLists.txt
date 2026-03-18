@@ -48,16 +48,16 @@ include_directories(${COMMON_INCLUDES})
 
 ### Compile header files into a library
 ## local matrix library     !!! not needed, doesnt do anything
-add_library(lm_matlib INTERFACE ${PROJECT_SOURCE_DIR}/libs/serial/matrix.h) 
-set_target_properties(lm_matlib PROPERTIES CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}")
+# add_library(lm_matlib INTERFACE ${PROJECT_SOURCE_DIR}/libs/serial/matrix.h) 
+# set_target_properties(lm_matlib PROPERTIES CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}")
 
 ## local statistics library !!! not needed, doesnt do anything
-add_library(lm_stats INTERFACE ${PROJECT_SOURCE_DIR}/libs/serial/statistics.h)
-set_target_properties(lm_stats PROPERTIES CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}")
+# add_library(lm_stats INTERFACE ${PROJECT_SOURCE_DIR}/libs/common/statistics.h)
+# set_target_properties(lm_stats PROPERTIES CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}")
 
 ## local time library       !!! not needed, doesnt do anything
-add_library(lm_timer INTERFACE ${PROJECT_SOURCE_DIR}/libs/serial/timer.h)
-set_target_properties(lm_timer PROPERTIES CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}")
+# add_library(lm_timer INTERFACE ${PROJECT_SOURCE_DIR}/libs/common/timer.h)
+# set_target_properties(lm_timer PROPERTIES CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}")
 
 ## IF I needed an external library, say header only Boost 
 # target_link_libraries(lm_matlib INTERFACE Boost::Boost)

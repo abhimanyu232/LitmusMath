@@ -6,8 +6,8 @@
 
 // user-defined libraries
 #include "../libs/serial/matrix.h"
-#include "../libs/serial/statistics.h"
-#include "../libs/serial/timer.h"
+#include "../libs/common/statistics.h"
+#include "../libs/common/timer.h"
 
 int main(int argc, char** argv) {
 

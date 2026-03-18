@@ -1,5 +1,5 @@
-#ifndef MATRIX_H
-#define MATRIX_H
+#ifndef MATRIX_OMP_H
+#define MATRIX_OMP_H
 
 #include <array>
 #include <cassert>
@@ -21,7 +21,7 @@
 
 // todo: use concepts instead of SFINAE in the functions below.
 
-namespace matrix_serial {
+namespace matrix_omp {
 
 /**
 * @brief Matrix class using std::vector
@@ -329,6 +329,69 @@ template <typename U, typename V>
 auto operator/(const V lhs_scalar, const Matrix<U>& rhs_matrix) noexcept {
 	return rhs_matrix / lhs_scalar;
 }
+
+/**
+* std::formatter overloads : easy printing 
+*/
+
+/**
+ * @brief overload std::formatter for using std::print and std::println
+ * prints matrix in with its given shape.
+ * 
+ * todo: use SFINAE to differ bw integral and floating point  
+ */
+template <typename U>
+struct std::formatter<Matrix<U>> {
+	constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }
+
+	auto format(const Matrix<U>& matrix, std::format_context& ctx) const {
+		auto out = ctx.out();
+		if (matrix.elements().empty()) {
+			return std::format_to(out, "\n");
+		} else {
+			const auto [m_rows, m_columns] = matrix.shape();
+			// auto m_rows = matrix.shape().first;
+			// auto m_columns = matrix.shape().second;
+			for (size_t i = 0; i < m_rows; ++i) {
+				for (size_t j = 0; j < m_columns; ++j) {
+					std::format_to(out, "{:0.6}\t", matrix[m_columns * i + j]);
+				}
+				std::format_to(out, "\n");
+			}
+			return out;
+		}
+	}
+};
+
+/**
+ * @brief overload std::formatter for using std::print and std::println
+ * prints matrix in with its given shape.
+ * 
+ *  template specialisation for Matrix<int> 
+ *  todo: use SFINAE to make this work with all std::integral
+*/
+template <>
+struct std::formatter<Matrix<int>> {
+	constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }
+
+	auto format(const Matrix<int>& matrix, std::format_context& ctx) const {
+		auto out = ctx.out();
+		if (matrix.elements().empty()) {
+			return std::format_to(out, "\n");
+		} else {
+			const auto [m_rows, m_columns] = matrix.shape();
+			// auto m_rows = matrix.shape().first;
+			// auto m_columns = matrix.shape().second;
+			for (size_t i = 0; i < m_rows; ++i) {
+				for (size_t j = 0; j < m_columns; ++j) {
+					std::format_to(out, "{}\t", matrix[m_columns * i + j]);
+				}
+				std::format_to(out, "\n");
+			}
+			return out;
+		}
+	}
+};
 
 /**
 * Matrix Manipulation Functions
@@ -751,72 +814,7 @@ auto cStyle_matMultBasic(std::span<const U> matrixA,
 
 	return result;
 }
- 
-} // namespace matrix_serial
 
-using namespace matrix_serial;
-
-/**
-* std::formatter overloads : easy printing 
-*/
-
-/**
- * @brief overload std::formatter for using std::print and std::println
- * prints matrix in with its given shape.
- * 
- * todo: use SFINAE to differ bw integral and floating point  
- */
-template <typename U>
-struct std::formatter<Matrix<U>> {
-	constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }
-
-	auto format(const Matrix<U>& matrix, std::format_context& ctx) const {
-		auto out = ctx.out();
-		if (matrix.elements().empty()) {
-			return std::format_to(out, "\n");
-		} else {
-			const auto [m_rows, m_columns] = matrix.shape();
-			// auto m_rows = matrix.shape().first;
-			// auto m_columns = matrix.shape().second;
-			for (size_t i = 0; i < m_rows; ++i) {
-				for (size_t j = 0; j < m_columns; ++j) {
-					std::format_to(out, "{:0.6}\t", matrix[m_columns * i + j]);
-				}
-				std::format_to(out, "\n");
-			}
-			return out;
-		}
-	}
-};
-
-/**
- * @brief overload std::formatter for using std::print and std::println
- * prints matrix in with its given shape.
- * 
- *  template specialisation for Matrix<int> 
- *  todo: use SFINAE to make this work with all std::integral
-*/
-template <>
-struct std::formatter<Matrix<int>> {
-	constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }
-
-	auto format(const Matrix<int>& matrix, std::format_context& ctx) const {
-		auto out = ctx.out();
-		if (matrix.elements().empty()) {
-			return std::format_to(out, "\n");
-		} else {
-			const auto [m_rows, m_columns] = matrix.shape();
-			// auto m_rows = matrix.shape().first;
-			// auto m_columns = matrix.shape().second;
-			for (size_t i = 0; i < m_rows; ++i) {
-				for (size_t j = 0; j < m_columns; ++j) {
-					std::format_to(out, "{}\t", matrix[m_columns * i + j]);
-				}
-				std::format_to(out, "\n");
-			}
-			return out;
-		}
-	}
-};
+}	 // namespace matrix_omp
 
 #endif

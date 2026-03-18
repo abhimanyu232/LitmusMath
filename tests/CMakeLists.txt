@@ -25,7 +25,7 @@ set(TEST_NAME ${PROJECT_NAME}_tests)
 add_executable(${TEST_NAME} ${sources_test})
 target_link_libraries(${TEST_NAME} gtest gtest_main)
 ## Extra linking to this project.
-target_link_libraries(${TEST_NAME} lm_matlib lm_stats lm_timer)
+# target_link_libraries(${TEST_NAME} lm_matlib lm_stats lm_timer)
 
 # gtest_discover_tests(${TEST_NAME})
 add_test(UnitTests ${TEST_NAME})

@@ -5,6 +5,8 @@
 
 #include "../libs/serial/matrix.h"
 
+using namespace matrix_serial;
+
 class MatrixTest : public testing::Test {
  protected:
 	MatrixTest()

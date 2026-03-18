@@ -4,8 +4,10 @@
 
 // user-defined libraries
 #include "../libs/serial/matrix.h"
-#include "../libs/serial/statistics.h"
-#include "../libs/serial/timer.h"
+#include "../libs/common/statistics.h"
+#include "../libs/common/timer.h"
+
+using namespace matrix_serial;
 
 int main() {
 
