@@ -5,7 +5,6 @@
 #include <chrono>
 
 #include <filesystem>
-#include <print>
 
 /// user-defined includes
 #include "statistics.h"
@@ -19,7 +18,7 @@ using Time = std::chrono::steady_clock;
 using DoubleSeconds = std::chrono::duration<double>;
 using FloatTimePoint = std::chrono::time_point<Time, DoubleSeconds>;
 
-constexpr FloatTimePoint GetCurrentTime() {
+[[nodiscard]] constexpr FloatTimePoint GetCurrentTime() {
 	return Time::now();
 }
 

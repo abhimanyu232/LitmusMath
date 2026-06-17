@@ -11,6 +11,7 @@ Checks: >
   performance-move-const-arg,
   performance-noexcept-move-constructor,
   -header-filter=include
+# HeaderFilterRegex: 'include'
 
 # WarningsAsErrors: "*"
  

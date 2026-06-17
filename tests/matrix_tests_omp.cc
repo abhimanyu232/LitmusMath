@@ -2,15 +2,16 @@
 
 #include "common.h"
 
-#include "../libs/serial/matrix.h"
+#include "../libs/parallel/matrix_omp.h"
 
 //!!! replace EXPECT_TRUE with EXPECT_EQ or EXPECT_NEAR or EXPECT_FLOAT_EQ
 
-using namespace matrix_serial;
 
-class MatrixTest : public testing::Test {
+using namespace matrix_omp;
+
+class MatrixTestOpenMP : public testing::Test {
  protected:
-	MatrixTest()
+	MatrixTestOpenMP()
 			: iMatrix1(iVec1, 4, 3),
 				iMatrix2(iVec2, 3, 4),
 				fMatrix1(fVec1, 2, 3),
@@ -34,7 +35,7 @@ class MatrixTest : public testing::Test {
 	Matrix<float_type> fMatrix2;
 };
 
-TEST_F(MatrixTest, MakeEmptyMatrix) {
+TEST_F(MatrixTestOpenMP, MakeEmptyMatrix) {
 
 	// empty matrix, no size, only size reserved.
 	Matrix<int> emptyMatrix1;
@@ -56,7 +57,7 @@ TEST_F(MatrixTest, MakeEmptyMatrix) {
 	}
 }
 
-TEST_F(MatrixTest, ConstructFromVectors) {
+TEST_F(MatrixTestOpenMP, ConstructFromVectors) {
 	// construct from int vector
 	EXPECT_TRUE(iMatrix1.size() == 12);
 	EXPECT_TRUE(iMatrix1.shape().first == 4);
@@ -68,7 +69,7 @@ TEST_F(MatrixTest, ConstructFromVectors) {
 	EXPECT_TRUE(fMatrix1.shape().second == 3);
 }
 
-TEST_F(MatrixTest, ConstructFromMatrix) {
+TEST_F(MatrixTestOpenMP, ConstructFromMatrix) {
 	// copy constructors
 
 	// copy int from int
@@ -93,7 +94,7 @@ TEST_F(MatrixTest, ConstructFromMatrix) {
 	// Matrix<int> copy_imatrix3(fMatrix1);
 }
 
-TEST_F(MatrixTest, MatrixSimpleArithmetic) {
+TEST_F(MatrixTestOpenMP, MatrixSimpleArithmetic) {
 	// set-up test matrices
 	Matrix<float_type> temp_f_Matrix(
 		std::vector<float_type>{0.1, 0.2, 0.3, 0.4, 0.5, 0.6}, 2, 3);
@@ -128,7 +129,7 @@ TEST_F(MatrixTest, MatrixSimpleArithmetic) {
 	}
 }
 
-// TEST_F(MatrixTest, MatrixManipulation) {
+// TEST_F(MatrixTestOpenMP, MatrixManipulation) {
 
 // 	auto transposed_int_matrix = MatrixTransposeNaive(iMatrix1);
 // 	for (size_t i = 0; i < iMatrix1.size(); ++i) {
@@ -138,7 +139,7 @@ TEST_F(MatrixTest, MatrixSimpleArithmetic) {
 // 	// todo: add test statements
 // }
 
-TEST_F(MatrixTest, MatrixMultiplicationNaive) {
+TEST_F(MatrixTestOpenMP, MatrixMultiplicationNaive) {
 
 	// multiply int matrices
 	Matrix<int> matrix_matmult_ivec12 =
@@ -191,7 +192,7 @@ TEST_F(MatrixTest, MatrixMultiplicationNaive) {
 	}
 }
 
-TEST_F(MatrixTest, MatrixMultiplicationTransposed) {
+TEST_F(MatrixTestOpenMP, MatrixMultiplicationTransposed) {
 
 	// use the transposed matrix multiplication to improve cache hits
 	auto matrix_matmult_fivec = MatMultTxp(iMatrix1, fMatrix2);	 // 4x3 * 3x2
@@ -207,7 +208,7 @@ TEST_F(MatrixTest, MatrixMultiplicationTransposed) {
 	}
 }
 
-TEST_F(MatrixTest, MatrixMultiplicationStrassen) {
+TEST_F(MatrixTestOpenMP, MatrixMultiplicationStrassen) {
 
 	constexpr size_t n_row = 64;
 	constexpr size_t n_col = 64;

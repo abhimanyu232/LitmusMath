@@ -1,4 +1,3 @@
-#include <print>
 // user-defined includes
 #include "common.h"
 
@@ -74,14 +73,14 @@ int main() {
 
 	/* Random Number Generation */
 	std::println("Gaussian Random  ");
-	auto normal_random = GetNormalRandomNumbers<100>(0.F, 1.0F, 42);
+	auto normal_random = GetNormalRandomNumbers<100>(0., 1.0, 42);
 	for (size_t i = 0; i < normal_random.size(); ++i) {
 		std::println("{}, {:.6f},", i, normal_random[i]);
 	}
 
 	std::println("Unifrom Random  ");
 	constexpr size_t size44 = 16;
-	auto uniform_random16 = [](float_t min, float_type max,
+	auto uniform_random16 = [](float_type min, float_type max,
 														 uint64_t seed) -> std::vector<float_type> {
 		return GetUniformRandomNumbers<size44>(min, max, seed);
 	};

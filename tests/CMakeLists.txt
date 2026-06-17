@@ -23,7 +23,7 @@ file(GLOB_RECURSE sources_test CONFIGURE_DEPENDS *.cc)
 
 set(TEST_NAME ${PROJECT_NAME}_tests)
 add_executable(${TEST_NAME} ${sources_test})
-target_link_libraries(${TEST_NAME} gtest gtest_main)
+target_link_libraries(${TEST_NAME} PUBLIC OpenMP::OpenMP_CXX gtest gtest_main)
 ## Extra linking to this project.
 # target_link_libraries(${TEST_NAME} lm_matlib lm_stats lm_timer)
 
@@ -54,7 +54,4 @@ set_target_properties(gmock PROPERTIES CXX_CLANG_TIDY "")
 set_target_properties(gmock_main PROPERTIES CXX_CLANG_TIDY "")
 
 
-set_target_properties(${TEST_NAME}  PROPERTIES CXX_CLANG_TIDY "")
-set_target_properties(${TEST_NAME}  PROPERTIES CXX_CLANG_TIDY "")
-set_target_properties(${TEST_NAME}  PROPERTIES CXX_CLANG_TIDY "")
 set_target_properties(${TEST_NAME}  PROPERTIES CXX_CLANG_TIDY "")

@@ -8,7 +8,11 @@
 #include <span>
 #include <type_traits>
 #include <vector>
+#include <concepts>
 
+//!!! add [[nodiscard]]  where apt
+
+// todo: use concepts instead of SFINAE in the functions below.
 /** Concepts */
 /** 
 * shouldnt work,
@@ -18,8 +22,6 @@
 * 	requires vector.size() == a* b;
 * };
 */
-
-// todo: use concepts instead of SFINAE in the functions below.
 
 namespace matrix_serial {
 
@@ -57,11 +59,8 @@ class Matrix {
 			: m_{nX}, n_{nY}, size_(m_ * n_), elements_(in_data) {}
 
 	// move given vector and shape // todo: should everything be r-val ref here??
-	constexpr Matrix(data_type&& in_data, size_t&& nX, size_t&& nY) noexcept
-			: m_{std::move(nX)},
-				n_{std::move(nY)},
-				size_(m_ * n_),
-				elements_(std::move(in_data)) {}
+	constexpr Matrix(data_type&& in_data, size_t nX, size_t nY) noexcept
+			: m_{nX}, n_{nY}, size_(m_ * n_), elements_(std::move(in_data)) {}
 
 	// copy constructors
 	constexpr Matrix(const Matrix& otherMatrix) noexcept = default;
@@ -84,15 +83,18 @@ class Matrix {
 	*/
 
 	// cast allowed only for integral-> floating point type
-	template <typename U, std::enable_if_t<std::is_floating_point_v<U>, int> = 0>
+	// template <typename U, std::enable_if_t<std::is_floating_point_v<U>, int> = 0>
+	template <std::floating_point U>
 	explicit operator Matrix<U>() const {
-		std::println("converting float to int");
+		std::println("converting int to float");
 		return Matrix<U>(std::vector<U>(elements_.begin(), elements_.end()), m_,
 										 n_);
 	}
 
 	// no narrowing conversions
-	template <typename U, std::enable_if_t<!std::is_floating_point_v<U>, int> = 0>
+	// template <typename U, std::enable_if_t<!std::is_floating_point_v<U>, int> = 0>
+	template <typename U>
+		requires(!std::floating_point<U>)
 	operator Matrix<U>() const = delete;
 
 	// spaceship comparison operator // also default generates operator==
@@ -115,17 +117,18 @@ class Matrix {
 	// add assignment +=
 	Matrix& operator+=(const Matrix& otherMatrix) noexcept {
 		assert(size_ == otherMatrix.size());
-		for (unsigned int i = 0; i < size_; ++i) {
+		for (size_t i = 0; i < size_; ++i) {
 			elements_[i] += otherMatrix[i];	 // eqv to: otherMatrix.elements(i);
 		}
 		return *this;
 	}
 
 	// add assignment += generic
+	//!!! silent conversion here from U -> T
 	template <typename U>
 	Matrix& operator+=(const Matrix<U>& otherMatrix) noexcept {
 		assert(size_ == otherMatrix.size());
-		for (unsigned int i = 0; i < size_; ++i) {
+		for (size_t i = 0; i < size_; ++i) {
 			elements_[i] += static_cast<T>(otherMatrix[i]);
 		}
 		return *this;
@@ -133,17 +136,19 @@ class Matrix {
 
 	// subtract assignment -=
 	Matrix& operator-=(const Matrix& otherMatrix) noexcept {
-		for (unsigned int i = 0; i < size_; ++i) {
+		assert(size_ == otherMatrix.size());
+		for (size_t i = 0; i < size_; ++i) {
 			elements_[i] -= otherMatrix[i];
 		}
 		return *this;
 	}
 
 	// subtract assignment -= generic
+	//!!! silent conversion here from U -> T
 	template <typename U>
 	Matrix& operator-=(const Matrix<U>& otherMatrix) noexcept {
 		assert(size_ == otherMatrix.size());
-		for (unsigned int i = 0; i < size_; ++i) {
+		for (size_t i = 0; i < size_; ++i) {
 			elements_[i] -= static_cast<T>(otherMatrix[i]);
 		}
 		return *this;
@@ -153,7 +158,7 @@ class Matrix {
 
 	// scalar multiply assignment *=
 	Matrix& operator*=(T scalar) noexcept {
-		for (unsigned int i = 0; i < size_; ++i) {
+		for (size_t i = 0; i < size_; ++i) {
 			elements_[i] *= scalar;
 		}
 		return *this;
@@ -162,7 +167,7 @@ class Matrix {
 	// scalar multiply assignment *= generic
 	template <typename U>
 	Matrix& operator*=(U scalar) noexcept {
-		for (unsigned int i = 0; i < size_; ++i) {
+		for (size_t i = 0; i < size_; ++i) {
 			elements_[i] *= static_cast<T>(scalar);
 		}
 		return *this;
@@ -170,7 +175,7 @@ class Matrix {
 
 	// scalar divide assignement /=
 	Matrix& operator/=(T scalar) noexcept {
-		for (unsigned int i = 0; i < size_; ++i) {
+		for (size_t i = 0; i < size_; ++i) {
 			elements_[i] /= scalar;
 		}
 		return *this;
@@ -179,7 +184,7 @@ class Matrix {
 	// scalar divide assignment /= generic
 	template <typename U>
 	Matrix& operator/=(U scalar) noexcept {
-		for (unsigned int i = 0; i < size_; ++i) {
+		for (size_t i = 0; i < size_; ++i) {
 			elements_[i] /= static_cast<T>(scalar);
 		}
 		return *this;
@@ -213,23 +218,25 @@ class Matrix {
 	}
 
 	// property accessor
-	const size_t size() const noexcept { return size_; }
+	[[nodiscard]] const size_t size() const noexcept { return size_; }
 
-	const auto shape() const noexcept { return std::make_pair(m_, n_); }
+	[[nodiscard]] auto shape() const noexcept { return std::make_pair(m_, n_); }
 
-	const data_type& elements() const noexcept { return elements_; }
+	[[nodiscard]] const data_type& elements() const noexcept { return elements_; }
 
-	const data_type& elements(size_t i) const noexcept { return elements_[i]; }
+	[[nodiscard]] const value_type& elements(size_t i) const noexcept {
+		return elements_[i];
+	}
 
 	/**
 	*  friend functions 
 	*/
 	friend struct std::formatter<Matrix>;
 
-	template <typename U, typename V>
-	friend auto operator+(const Matrix<U>& lhs, const Matrix<V>& rhs);
-	template <typename U, typename V>
-	friend auto operator-(const Matrix<U>& lhs, const Matrix<V>& rhs);
+	// template <typename U, typename V>
+	// auto operator+(const Matrix<U>& lhs, const Matrix<V>& rhs);
+	// template <typename U, typename V>
+	// auto operator-(const Matrix<U>& lhs, const Matrix<V>& rhs);
 
  protected:
 	// protected members
@@ -251,24 +258,24 @@ class Matrix {
 // this should therefore imply std::is_convertible_v<V,U> if !(std::is_convertible_v<U,V>)
 // hence this should be good for a commutative check.
 /**
- * @brief check if matrix of different value_type are equal (MatrixA<U> == MatrixB)  
- * 
- * only valid for convertible types <U,V> or <V,U> : no narrowing type conversion of matrix is allowed.
- * 
- * @tparam U 
- * @tparam V 
- * @param MatrixA 
- * @param MatrixB 
- * @return true 
- * @return false 
- */
-template <typename U, typename V,
-					std::enable_if_t<std::is_convertible_v<U, V>, int> = 0>
-bool operator==(const Matrix<U>& MatrixA, const Matrix<V>& MatrixB) {
-	return ((MatrixA.elements() == MatrixB.elements()) &&
-					(MatrixA.shape().first == MatrixB.shape().first) &&
-					(MatrixA.shape().second == MatrixB.shape().second));
-}
+//  * @brief check if matrix of different value_type are equal (MatrixA<U> == MatrixB)  
+//  * 
+//  * only valid for convertible types <U,V> or <V,U> : no narrowing type conversion of matrix is allowed.
+//  * 
+//  * @tparam U 
+//  * @tparam V 
+//  * @param MatrixA 
+//  * @param MatrixB 
+//  * @return true 
+//  * @return false 
+//  */
+// template <typename U, typename V,
+// 					std::enable_if_t<std::is_convertible_v<U, V>, int> = 0>
+// bool operator==(const Matrix<U>& MatrixA, const Matrix<V>& MatrixB) {
+// 	return ((MatrixA.elements() == MatrixB.elements()) &&
+// 					(MatrixA.shape().first == MatrixB.shape().first) &&
+// 					(MatrixA.shape().second == MatrixB.shape().second));
+// }
 
 //!!!todo: why?? access to private data members. current access via function call. stupid imo.
 //!!!todo: why?? Binaries can be declared as friends but may also just be regular functions.
@@ -280,8 +287,9 @@ bool operator==(const Matrix<U>& MatrixA, const Matrix<V>& MatrixB) {
 * @brief Binary Arithmetic addition operator Overload
 */ //!!! use SFINAE HERE AS WELL, to cast from integral to float but not otherwise.
 template <typename U, typename V>
+	requires(std::common_with<U, V>)
 auto operator+(const Matrix<U>& lhs, const Matrix<V>& rhs) {
-	assert(lhs.size_ == rhs.size_);
+	assert(lhs.size() == rhs.size());
 	Matrix<typename std::common_type<U, V>::type> result(lhs);
 	return result += rhs;	 // todo: std::move(result+=rhs);
 												 // NRVO here or not???
@@ -291,8 +299,9 @@ auto operator+(const Matrix<U>& lhs, const Matrix<V>& rhs) {
 * @brief Binary Arithmetic Subtraction Overload
 */ //!!! use SFINAE HERE AS WELL, to cast from integral to float but not otherwise.
 template <typename U, typename V>
+	requires(std::common_with<U, V>)
 auto operator-(const Matrix<U>& lhs, const Matrix<V>& rhs) {
-	assert(lhs.size_ == rhs.size_);
+	assert(lhs.size() == rhs.size());
 	Matrix<typename std::common_type<U, V>::type> result(lhs);
 	return result -= rhs;	 // todo: std::move(result+=rhs);
 												 // NRVO here or not???
@@ -302,6 +311,7 @@ auto operator-(const Matrix<U>& lhs, const Matrix<V>& rhs) {
 * @brief Binary Matrix Scalar Multiply Overload
 */ //!!! use SFINAE HERE AS WELL, to cast from integral to float but not otherwise.
 template <typename U, typename V>
+	requires(std::common_with<U, V>)
 auto operator*(const Matrix<U>& lhs_matrix, const V rhs_scalar) noexcept {
 	Matrix<typename std::common_type<U, V>::type> result(lhs_matrix);
 
@@ -318,6 +328,7 @@ auto operator*(const V lhs_scalar, const Matrix<U>& rhs_matrix) noexcept {
 * @brief Binary Matrix Scalar Division Overload
 */ //!!! use SFINAE HERE AS WELL, to cast from integral to float but not otherwise.
 template <typename U, typename V>
+	requires(std::common_with<U, V>)
 auto operator/(const Matrix<U>& lhs_matrix, const V rhs_scalar) noexcept {
 	Matrix<typename std::common_type<U, V>::type> result(lhs_matrix);
 
@@ -367,6 +378,7 @@ auto MatrixTransposeNaive(const Matrix<T>& input_matrix) {
 * 
 */
 template <typename U, typename V>
+	requires(std::common_with<U, V>)
 auto matMultBasic(const Matrix<U>& matrixA, const Matrix<V>& matrixB) {
 
 	// the resultant matrix should be converted to appropriate type
@@ -389,7 +401,7 @@ auto matMultBasic(const Matrix<U>& matrixA, const Matrix<V>& matrixB) {
 	for (size_t i = 0; i < M; ++i) {
 		for (size_t j = 0; j < N; ++j) {
 			size_t res_idx = N * i + j;
-			// float_type temp_sum  = 0.0F;
+			// float_type temp_sum  = 0.;
 			for (size_t k = 0; k < P; ++k) {
 				size_t a_idx = P * i + k;
 				size_t b_idx = N * k + j;
@@ -411,6 +423,7 @@ auto matMultBasic(const Matrix<U>& matrixA, const Matrix<V>& matrixB) {
 */
 // assert(matrixA.P == matrixB.P);
 template <typename U, typename V>
+	requires(std::common_with<U, V>)
 auto MatMultTxp(const Matrix<U>& matrixA, const Matrix<V>& matrixB) {
 	using common_t = typename std::common_type<U, V>::type;
 
@@ -456,6 +469,7 @@ auto MatMultTxp(const Matrix<U>& matrixA, const Matrix<V>& matrixB) {
  * @return auto 
  */
 template <typename U, typename V>
+	requires(std::common_with<U, V>)
 auto MatMultStrassen(const Matrix<U>& matrixA, const Matrix<V>& matrixB,
 										 const bool do_full_strassen = false) {
 	using common_t = typename std::common_type<U, V>::type;
@@ -492,8 +506,10 @@ template <typename U>
 Matrix<U> PadMatrix(Matrix<U> inputMatrix, const size_t paddingSize = 0) {
 	if (paddingSize == 0)
 		return inputMatrix;
-	else
+	else {
 		std::println("padding method not implemented");
+		std::exit(1);
+	}
 }
 
 /// @brief Implementation of Strassens Algorithm for Matrix Multiplication
@@ -504,6 +520,7 @@ Matrix<U> PadMatrix(Matrix<U> inputMatrix, const size_t paddingSize = 0) {
 /// @param Matrix<V> matrixB
 /// @return Matrix<common_type<U, V>> res_matrix
 template <typename U, typename V>
+	requires(std::common_with<U, V>)
 Matrix<typename std::common_type<U, V>::type> MatMultStrassen_Impl(
 	const Matrix<U>& matrixA, const Matrix<V>& matrixB,
 	bool do_full_strassen = false) {
@@ -615,15 +632,15 @@ auto getQuadMatrices(const Matrix<T>& matrixA) {
 
 	std::vector<T> matrix_data = matrixA.elements();	// copy data
 	size_t matrix_size = matrixA.size();
-	size_t half_matrix_size = 0.5 * matrix_size;
+	size_t half_matrix_size = matrix_size / 2;
 
 	// shape(m,n) = rows x cols = (rows=ny,cols=nx)
 	size_t matA_nrows = matrixA.shape().first;	 // num rows
 	size_t matA_ncols = matrixA.shape().second;	 // num cols
 
 	//!!! todo : prior check if shape is divisible by 2.
-	size_t quad_mat_nrows = 0.5 * matA_nrows;
-	size_t quad_mat_ncols = 0.5 * matA_ncols;
+	size_t quad_mat_nrows = matA_nrows / 2;
+	size_t quad_mat_ncols = matA_ncols / 2;
 
 	std::vector<std::vector<T>> quad_vectors(4);
 	// each vector has size quad_mat_ncols*quad_mat_nrows
@@ -631,6 +648,7 @@ auto getQuadMatrices(const Matrix<T>& matrixA) {
 	// load each row ; stride = number of cols.
 	for (size_t j = 0, i = 0; i < matrix_size; i += matA_ncols) {
 
+		//!!! why use floor here, both are integral types
 		j = 2 * std::floor(i / half_matrix_size);
 
 		quad_vectors[j].insert(quad_vectors[j].end(),
@@ -673,12 +691,14 @@ Matrix<U> assembleMatrixfromQuads(const Matrix<U>& matrix11,
 
 	// shape(m,n) = rows x cols = (rows=ny,cols=nx)
 	size_t assm_mat_nrows = quad_mat_nrows * 2;	 // num rows
-	size_t assm_mat_ncols = quad_mat_nrows * 2;	 // num cols
+	size_t assm_mat_ncols = quad_mat_ncols * 2;	 // num cols
+
 	size_t assm_mat_size = assm_mat_nrows * assm_mat_ncols;
-	size_t half_assm_mat_size = 0.5 * assm_mat_size;
+	size_t half_assm_mat_size = assm_mat_size / 2;
 
 	std::vector<U>
 		assembled_matrix_vector;	// un-init size. to init assembled_matrix_vector(assm_mat_size)
+	assembled_matrix_vector.reserve(assm_mat_size);
 
 	std::vector<std::vector<U>> quad_vectors(4);
 	quad_vectors[0].insert(quad_vectors[0].end(), matrix11.elements().begin(),
@@ -693,6 +713,7 @@ Matrix<U> assembleMatrixfromQuads(const Matrix<U>& matrix11,
 	// i = 0,1,2....assm_nrows.
 	for (size_t j = 0, k = 0, i = 0; i < assm_mat_nrows; i++) {
 
+		//!!! why use floor here, both are integral types
 		j = 2 * (std::floor(i / (quad_mat_nrows)));
 		// i=0,1,2,3 -> j = 0 ; i=4,5,6,7 -> j = 2 if for example given that assm_mat_nrows = 8.
 		k = (i % (quad_mat_nrows)) * quad_mat_ncols;
@@ -722,6 +743,7 @@ Matrix<U> assembleMatrixfromQuads(const Matrix<U>& matrix11,
 * @return Matrix<typename std::common_type<U, V>::type> C of shape M*N
 */
 template <typename U, typename V>
+	requires(std::common_with<U, V>)
 auto cStyle_matMultBasic(std::span<const U> matrixA,
 												 std::pair<size_t, size_t> shapeA,
 												 std::span<const V> matrixB,
@@ -751,10 +773,8 @@ auto cStyle_matMultBasic(std::span<const U> matrixA,
 
 	return result;
 }
- 
-} // namespace matrix_serial
 
-using namespace matrix_serial;
+}	 // namespace matrix_serial
 
 /**
 * std::formatter overloads : easy printing 
@@ -767,20 +787,24 @@ using namespace matrix_serial;
  * todo: use SFINAE to differ bw integral and floating point  
  */
 template <typename U>
-struct std::formatter<Matrix<U>> {
+struct std::formatter<matrix_serial::Matrix<U>> {
 	constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }
 
-	auto format(const Matrix<U>& matrix, std::format_context& ctx) const {
+	auto format(const matrix_serial::Matrix<U>& matrix,
+							std::format_context& ctx) const {
 		auto out = ctx.out();
 		if (matrix.elements().empty()) {
 			return std::format_to(out, "\n");
 		} else {
 			const auto [m_rows, m_columns] = matrix.shape();
-			// auto m_rows = matrix.shape().first;
-			// auto m_columns = matrix.shape().second;
 			for (size_t i = 0; i < m_rows; ++i) {
 				for (size_t j = 0; j < m_columns; ++j) {
-					std::format_to(out, "{:0.6}\t", matrix[m_columns * i + j]);
+					if constexpr (std::integral<U>) {
+						// special stream handling for Matrix<int>
+						std::format_to(out, "{}\t", matrix[m_columns * i + j]);
+					} else {
+						std::format_to(out, "{:0.6}\t", matrix[m_columns * i + j]);
+					}
 				}
 				std::format_to(out, "\n");
 			}
@@ -796,27 +820,28 @@ struct std::formatter<Matrix<U>> {
  *  template specialisation for Matrix<int> 
  *  todo: use SFINAE to make this work with all std::integral
 */
-template <>
-struct std::formatter<Matrix<int>> {
-	constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }
+// template <>
+// struct std::formatter<matrix_serial::Matrix<int>> {
+// 	constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }
 
-	auto format(const Matrix<int>& matrix, std::format_context& ctx) const {
-		auto out = ctx.out();
-		if (matrix.elements().empty()) {
-			return std::format_to(out, "\n");
-		} else {
-			const auto [m_rows, m_columns] = matrix.shape();
-			// auto m_rows = matrix.shape().first;
-			// auto m_columns = matrix.shape().second;
-			for (size_t i = 0; i < m_rows; ++i) {
-				for (size_t j = 0; j < m_columns; ++j) {
-					std::format_to(out, "{}\t", matrix[m_columns * i + j]);
-				}
-				std::format_to(out, "\n");
-			}
-			return out;
-		}
-	}
-};
+// 	auto format(const matrix_serial::Matrix<int>& matrix,
+// 							std::format_context& ctx) const {
+// 		auto out = ctx.out();
+// 		if (matrix.elements().empty()) {
+// 			return std::format_to(out, "\n");
+// 		} else {
+// 			const auto [m_rows, m_columns] = matrix.shape();
+// 			// auto m_rows = matrix.shape().first;
+// 			// auto m_columns = matrix.shape().second;
+// 			for (size_t i = 0; i < m_rows; ++i) {
+// 				for (size_t j = 0; j < m_columns; ++j) {
+// 					std::format_to(out, "{}\t", matrix[m_columns * i + j]);
+// 				}
+// 				std::format_to(out, "\n");
+// 			}
+// 			return out;
+// 		}
+// 	}
+// };
 
 #endif

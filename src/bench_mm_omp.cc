@@ -4,13 +4,29 @@
 #include "common.h"
 
 // user-defined libraries
-#include "../libs/serial/matrix.h"
+#include "../libs/parallel/matrix_omp.h"
 #include "../libs/common/statistics.h"
 #include "../libs/common/timer.h"
 
-using namespace matrix_serial;
+// OpenMP api calls
+#include <omp.h>
+
+//!!! remove hardcored n threads, 
+inline constexpr int OMP_THREADS = 3;
+
+using namespace matrix_omp;
 
 int main(int argc, char** argv) {
+
+	// omp_set_dynamic(true); // set dynamic thread allocation 
+
+	omp_set_num_threads(OMP_THREADS); // overwrites the omp internal control variable 
+	// ^^ can be avoided if we instead set env $OMP_NUM_THREADS during launch.
+	
+	// auto n_threads = omp_get_num_threads();
+	auto max_threads = omp_get_max_threads();
+	
+	std::println("Max threads: {}",  max_threads);
 
 	/**
 	 * Benchmark settings
@@ -23,8 +39,6 @@ int main(int argc, char** argv) {
 	size_t niter = 100;
 
 	if (argc == 4) {
-		//! use std::from_chars here with std::errc to check error values.
-		// https://x.com/ChShersh/status/2045004034029781065/photo/1
 		size_min_exp = std::atoi(argv[1]);
 		size_max_exp = std::atoi(argv[2]);
 		niter = std::atoi(argv[3]);
@@ -37,7 +51,7 @@ int main(int argc, char** argv) {
 		std::println();
 	}
 
-	bool writeStatsFile = true;	 // whether to write benchmark files
+	bool writeStatsFile = false;	 // whether to write benchmark files
 
 	// Register Functions to Benchmark
 	auto matMultBase_f = [](const Matrix<float_type>& fMatA,

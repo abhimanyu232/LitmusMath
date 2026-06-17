@@ -61,21 +61,21 @@
 		},
 		{
 			"name": "Debug",
-			"displayName": "Debug; Flags: -g",
+			"displayName": "Debug; Flags: -O0 -g",
 			"inherits": "gcc15",
 			"cacheVariables": {
 				"CMAKE_BUILD_TYPE": "Debug",
-				"CMAKE_CXX_FLAGS": "-Winvalid-constexpr"
+				"CMAKE_CXX_FLAGS": "-O0 -Winvalid-constexpr"
 			}
 		},
 		{
 			"name": "Debug_Testing",
-			"displayName": "Debug w/ Testing; Flags: -g",
+			"displayName": "Debug w/ Testing; Flags: -O0 -g",
 			"inherits": "gcc15",
 			"cacheVariables": {
 				"CMAKE_BUILD_TYPE": "Debug",
 				"TESTING": "ON",
-				"CMAKE_CXX_FLAGS": "-Winvalid-constexpr"
+				"CMAKE_CXX_FLAGS": "-O0 -Winvalid-constexpr"
 			}
 		}
 	],
